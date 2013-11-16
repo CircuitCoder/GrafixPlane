@@ -3,6 +3,11 @@
   <groupId>tk.circuitcoder</groupId>
   <artifactId>Eschool</artifactId>
   <version>0.0.1-SNAPSHOT</version>
+  
+  <properties>
+  	<JETTY_VER>9.1.0.RC2</JETTY_VER>
+  </properties>
+  
   <build>
     <sourceDirectory>src</sourceDirectory>
     <plugins>
@@ -16,4 +21,13 @@
       </plugin>
     </plugins>
   </build>
+  
+  <dependencies>
+  	<dependency>
+  		<groupId>org.eclipse.jetty</groupId>
+  		<artifactId>jetty-all</artifactId>
+  		<version>${JETTY_VER}</version>
+  		<scope>runtime</scope>
+  	</dependency>
+  </dependencies>
 </project>
