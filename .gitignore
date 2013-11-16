@@ -7,3 +7,9 @@
 .classpath
 .project
 /.settings
+
+#Hello vim!
+.*.sw[a-p]
+
+#Hello Tuhao!
+.DS_Store
