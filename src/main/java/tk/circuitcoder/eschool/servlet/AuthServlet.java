@@ -1,6 +1,9 @@
 package tk.circuitcoder.eschool.servlet;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -26,7 +29,7 @@ public class AuthServlet extends HttpServlet {
 			String uname=req.getParameter("uname");
 			String passwd=req.getParameter("passwd");
 			
-			System.out.println("User login: "+uname+" with "+passwd);
+			Eschool.getEschool().getLogger().info("User login: "+uname+" with "+passwd);
 			
 			if(uname==null||passwd==null) resp.getWriter().write("9"); //Something strange happened
 			else if(verify(uname, passwd)) {
@@ -45,7 +48,19 @@ public class AuthServlet extends HttpServlet {
 	
 	private boolean verify(String uname,String passwd) {
 		//TODO: Finish IT!
-		if(uname.equals("admin")&&passwd.equals("123456")) return true;
-		return false;
+		//if(uname.equals("admin")&&passwd.equals("123456")) return true;
+		try {
+			Connection conn=Eschool.getEschool().getDB().getConn();
+			Statement stat=conn.createStatement();
+			ResultSet result=stat.executeQuery("SELECT * FROM E_USER WHERE(Username='"+uname+"');");
+			Eschool.getEschool().getLogger().info("SELECT * FROM E_USER WHERE(Username='"+uname+"');");
+			if(!result.first()) return false;
+			String storedPasswd=result.getString("Passwd");
+			if(storedPasswd==null||!storedPasswd.equalsIgnoreCase(passwd)) return false;
+			else return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
 	}
 }

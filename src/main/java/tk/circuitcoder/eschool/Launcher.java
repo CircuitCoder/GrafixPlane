@@ -18,6 +18,7 @@ public class Launcher {
 			.withRequiredArg()
 			.ofType(Integer.class)
 			.defaultsTo(80);
+		parser.acceptsAll(Arrays.asList("d","debug"), "Enable debug mode");
 		parser.acceptsAll(Arrays.asList("?","help"), "Show the help text");
 		parser.acceptsAll(Arrays.asList("v","version"), "Show the version");
 		
