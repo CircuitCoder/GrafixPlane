@@ -9,8 +9,9 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import javax.servlet.Filter;
+
+import tk.circuitcoder.eschool.Eschool;
 
 public class ControlFilter implements Filter {
 	
@@ -33,19 +34,10 @@ public class ControlFilter implements Filter {
 		String uri=req.getRequestURI();
 		if(uri.length()!=1&&uri.endsWith("/")) uri=uri.substring(0, uri.length()-1);
 		
-		System.out.println("Client "+req.getRemoteAddr()+" requested "+uri);
-		HttpSession session=req.getSession();
-		if(session.isNew()) session.setMaxInactiveInterval(600);
-		if(!uri.equals("/login.jsp")&&!uri.equals("/auth")&&session.getAttribute("e_user")==null) {
-			resp.sendRedirect("/login.jsp");
-			return;
-		}
-		else if(uri.equals("/")) {
-			resp.sendRedirect("/index.jsp");
-			return;
-		}
+		Eschool.getEschool().getLogger().info("Client "+req.getRemoteAddr()+" requested "+uri);
 		
 		req.setAttribute("e_host", host);
+		req.setAttribute("e_uri", uri);
 		
 		chain.doFilter(request, response);
 	}

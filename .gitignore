@@ -13,3 +13,7 @@
 
 #Hello Tuhao!
 .DS_Store
+
+#Hello Logfiles!
+*.log
+/logs

@@ -9,6 +9,7 @@ import java.util.EnumSet;
 import java.util.Random;
 
 import javax.servlet.DispatcherType;
+import javax.xml.crypto.dsig.spec.XPathType.Filter;
 
 import joptsimple.OptionSet;
 
@@ -17,11 +18,22 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.servlet.FilterHolder;
-import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.webapp.WebAppContext;
+import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
+import ch.qos.logback.classic.joran.JoranConfigurator;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.util.LogbackMDCAdapter;
+import ch.qos.logback.core.Appender;
+import ch.qos.logback.core.ConsoleAppender;
+import ch.qos.logback.core.FileAppender;
+import ch.qos.logback.core.filter.AbstractMatcherFilter;
+import ch.qos.logback.core.spi.FilterReply;
 import tk.circuitcoder.eschool.db.DatabaseManager;
 import tk.circuitcoder.eschool.db.H2DatabaseManager;
 import tk.circuitcoder.eschool.filter.ControlFilter;
@@ -49,9 +61,103 @@ public class Eschool {
 		}
 	}
 	
-	private void run(OptionSet options) throws Exception {		
+	private void run(OptionSet options) throws Exception {	
+		//Referred: http://logback.qos.ch/faq.html#sharedConfiguration
+		System.out.println("Starting Eschool Instance...");
+		
+		LoggerContext context=(LoggerContext) LoggerFactory.getILoggerFactory();
+		context.reset();
+		ch.qos.logback.classic.Logger rootLogger =
+				(ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+		
+		PatternLayoutEncoder debugPattern=new PatternLayoutEncoder();
+		debugPattern.setPattern("%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n");
+		debugPattern.setContext(context);
+		debugPattern.start();
+		
+		PatternLayoutEncoder infoPattern=new PatternLayoutEncoder();
+		infoPattern.setPattern("%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n");
+		infoPattern.setContext(context);
+		infoPattern.start();
+		
+		PatternLayoutEncoder errorPattern=new PatternLayoutEncoder();
+		errorPattern.setPattern("%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n");
+		errorPattern.setContext(context);
+		errorPattern.start();
+		
+		PatternLayoutEncoder consolePattern=new PatternLayoutEncoder();
+		consolePattern.setPattern("%-4relative [%thread] %-5level %logger{35} - %msg %n"); //TODO: Modifiable
+		consolePattern.setContext(context);
+		consolePattern.start();
+		
+		FileAppender<ILoggingEvent> debugAppender=new FileAppender<ILoggingEvent>();
+		debugAppender.setName("debug");
+		debugAppender.setFile("logs/debug.log");
+		debugAppender.setContext(context);
+		debugAppender.addFilter(new AbstractMatcherFilter<ILoggingEvent>() {
+			@Override
+			public FilterReply decide(ILoggingEvent event) {
+				if(event.getLevel().isGreaterOrEqual(Level.DEBUG))
+					return FilterReply.ACCEPT;
+				else return FilterReply.DENY;
+			}
+		});
+		debugAppender.setEncoder(debugPattern);
+		debugAppender.start();
+		
+		FileAppender<ILoggingEvent> infoAppender=new FileAppender<ILoggingEvent>();
+		infoAppender.setName("info");
+		infoAppender.setFile("logs/info.log");
+		infoAppender.setContext(context);
+		infoAppender.addFilter(new AbstractMatcherFilter<ILoggingEvent>() {
+			@Override
+			public FilterReply decide(ILoggingEvent event) {
+				if(event.getLevel().isGreaterOrEqual(Level.INFO))
+					return FilterReply.ACCEPT;
+				else return FilterReply.DENY;
+			}
+		});
+		infoAppender.setEncoder(infoPattern);
+		infoAppender.start();
+		
+		ConsoleAppender<ILoggingEvent> consoleAppender=new ConsoleAppender<ILoggingEvent>();
+		consoleAppender.setName("console");
+		consoleAppender.setContext(context);
+		consoleAppender.addFilter(new AbstractMatcherFilter<ILoggingEvent>() {
+			@Override
+			public FilterReply decide(ILoggingEvent event) {
+				if(event.getLevel().isGreaterOrEqual(Level.INFO))
+					return FilterReply.ACCEPT;
+				else return FilterReply.DENY;
+			}
+		});
+		consoleAppender.setEncoder(consolePattern);
+		consoleAppender.start();
+		
+		FileAppender<ILoggingEvent> errorAppender=new FileAppender<ILoggingEvent>();
+		errorAppender.setName("error");
+		errorAppender.setFile("logs/error.log");
+		errorAppender.setContext(context);
+		errorAppender.addFilter(new AbstractMatcherFilter<ILoggingEvent>() {
+			@Override
+			public FilterReply decide(ILoggingEvent event) {
+				if(event.getLevel().isGreaterOrEqual(Level.ERROR))
+					return FilterReply.ACCEPT;
+				else return FilterReply.DENY;
+			}
+		});
+		errorAppender.setEncoder(errorPattern);
+		errorAppender.start();
+		
+		rootLogger.addAppender(errorAppender);
+		rootLogger.addAppender(consoleAppender);
+		rootLogger.addAppender(infoAppender);
+		rootLogger.addAppender(debugAppender);
+		
+		
 		this.logger=LoggerFactory.getLogger(this.getClass());
-		this.logger.info("Starting Eschool Instance...");
+		if(debug) this.logger.error("Well this is a ERROR... For testing if logback is working");
+		this.logger.info("Logger configurated");
 		
 		port=(Integer) options.valueOf("p");
 		host=(String) options.valueOf("h");
@@ -65,8 +171,6 @@ public class Eschool {
 		if(host.endsWith("/")) host=host.substring(0,host.length()-2);
 		
 		webserver=new Server();
-		org.eclipse.jetty.util.log.Logger logger=Log.getLogger(Server.class);
-		logger.setDebugEnabled(debug);	//Enable additional output when debug mode is set, But currently not working
 		HandlerList handlers=new HandlerList();
 		
 		ServerConnector defaultConnector=new ServerConnector(webserver);
@@ -138,7 +242,7 @@ public class Eschool {
 		this.logger.info("Updating admin password: "+passwd);
 		Statement stat=conn.createStatement();
 		if(stat.executeUpdate("UPDATE E_USER SET Passwd = '"+passwd+"' WHERE Username = 'eschool_admin';")==0) { //IF NO line was updated
-			stat.executeUpdate("INSERT INTO E_USER VALUES ('eschool_admin','"+passwd+"',0);");
+			stat.executeUpdate("INSERT INTO E_USER VALUES ('eschool_admin','"+passwd+"',0);"); //TODO: Modifiable admin user name
 		}
 		
 		this.logger.info("Starting WebServer on port "+port);
@@ -161,5 +265,4 @@ public class Eschool {
 	public static Eschool getEschool() {
 		return instance;
 	}
-	
 }

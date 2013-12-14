@@ -1,0 +1,36 @@
+.e_button {
+	text-decoration: none;
+	position: relative;
+	
+	color:black;
+	padding: 5px;
+	margin: 5px;
+	
+	border: #888 solid 1px;
+	border-radius: 5px;
+
+	background-color: #BBB;
+	box-shadow: #333 0px 0px 0px;
+	
+	transition: background-color 0.5s,box-shadow 0.5s,top 0.5s;
+	-webkit-transition: background-color 0.5s,box-shadow 0.5s,top 0.5s;
+	-o-transition: background-color 0.5s,box-shadow 0.5s,top 0.5s;
+	-moz-transition: background-color 0.5s,box-shadow 0.5s,top 0.5s;
+}
+
+.e_button:hover {
+	background-color: #FFF;
+	top: -5px;
+	box-shadow: #333 0px 5px 0px;
+}
+
+.e_button.main_button {
+	color: white;
+	font-weight: bold;
+	background-color: #0F4DA8;
+}
+
+.e_button.main_button:hover {
+	background-color: #052F6D;
+}
+
