@@ -1,4 +1,34 @@
-.e_button {
+.g_frame {
+    background-color:#EEE;
+}
+
+.g_title {
+    color:#006195;
+    text-align:center;
+    text-shadow: black 0px 0px 5px;
+    font-size:3em;
+    font-weight:bold;
+}
+
+.g_input {
+    border-radius:5px;
+    padding:5px;
+    margin:5px;
+    
+    box-shadow:none;
+    
+    transition: box-shadow 0.5s;
+}
+
+.g_input:hover {
+    box-shadow: #ff4b4b 0px 0px 7px;
+}
+
+.g_input:focus {
+    box-shadow: #3098ff 0px 0px 7px;
+}
+
+.g_button {
 	text-decoration: none;
 	position: relative;
 	
@@ -18,19 +48,18 @@
 	-moz-transition: background-color 0.5s,box-shadow 0.5s,top 0.5s;
 }
 
-.e_button:hover {
+.g_button:hover {
 	background-color: #FFF;
 	top: -5px;
 	box-shadow: #333 0px 5px 0px;
 }
 
-.e_button.main_button {
+.g_button.main_button {
 	color: white;
 	font-weight: bold;
 	background-color: #0F4DA8;
 }
 
-.e_button.main_button:hover {
+.g_button.main_button:hover {
 	background-color: #052F6D;
 }
-

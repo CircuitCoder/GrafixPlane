@@ -1,4 +1,4 @@
-package tk.circuitcoder.eschool;
+package tk.circuitcoder.grafixplane;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -7,6 +7,12 @@ import joptsimple.OptionException;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 
+/**
+ * As it says, a Launcher</br>
+ * Takes the console arguments, and starts the GrafixPlane instance
+ * @author CircuitCoder
+ * @since 0.0.1
+ */
 public class Launcher {
 
 	public static void main(String[] args) {		
@@ -42,10 +48,10 @@ public class Launcher {
 			}
 		}
 		else if(options.has("v")) {
-			System.out.println(Eschool.VERSION_TEXT);
+			System.out.println(GrafixPlane.VERSION_TEXT);
 		}
 		else {
-			Eschool.start(options);
+			GrafixPlane.start(options);
 		}
 	}
 }

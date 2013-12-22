@@ -1,4 +1,4 @@
-package tk.circuitcoder.eschool.filter;
+package tk.circuitcoder.grafixplane.filter;
 
 import java.io.IOException;
 
@@ -11,8 +11,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.Filter;
 
-import tk.circuitcoder.eschool.Eschool;
+import tk.circuitcoder.grafixplane.GrafixPlane;
 
+/**
+ * Adds some information about the request into its header
+ * Filters all incoming request
+ * @author CircuitCoder
+ * @since 0.0.1
+ */
 public class ControlFilter implements Filter {
 	
 	private String host;
@@ -34,10 +40,10 @@ public class ControlFilter implements Filter {
 		String uri=req.getRequestURI();
 		if(uri.length()!=1&&uri.endsWith("/")) uri=uri.substring(0, uri.length()-1);
 		
-		Eschool.getEschool().getLogger().info("Client "+req.getRemoteAddr()+" requested "+uri);
+		GrafixPlane.getGP().getLogger().info("Client "+req.getRemoteAddr()+" requested "+uri);
 		
-		req.setAttribute("e_host", host);
-		req.setAttribute("e_uri", uri);
+		req.setAttribute("g_host", host);
+		req.setAttribute("g_uri", uri);
 		
 		chain.doFilter(request, response);
 	}

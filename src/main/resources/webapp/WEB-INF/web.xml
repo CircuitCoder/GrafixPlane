@@ -9,7 +9,7 @@
 	
 	<servlet>
 		<servlet-name>AuthServlet</servlet-name>
-		<servlet-class>tk.circuitcoder.eschool.servlet.AuthServlet</servlet-class>
+		<servlet-class>tk.circuitcoder.grafixplane.servlet.AuthServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>AuthServlet</servlet-name>

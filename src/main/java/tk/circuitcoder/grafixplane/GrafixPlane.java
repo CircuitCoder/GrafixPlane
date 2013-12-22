@@ -1,4 +1,4 @@
-package tk.circuitcoder.eschool;
+package tk.circuitcoder.grafixplane;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -9,39 +9,36 @@ import java.util.EnumSet;
 import java.util.Random;
 
 import javax.servlet.DispatcherType;
-import javax.xml.crypto.dsig.spec.XPathType.Filter;
-
 import joptsimple.OptionSet;
 
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.webapp.WebAppContext;
-import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
-import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.util.LogbackMDCAdapter;
-import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.FileAppender;
 import ch.qos.logback.core.filter.AbstractMatcherFilter;
 import ch.qos.logback.core.spi.FilterReply;
-import tk.circuitcoder.eschool.db.DatabaseManager;
-import tk.circuitcoder.eschool.db.H2DatabaseManager;
-import tk.circuitcoder.eschool.filter.ControlFilter;
-
-public class Eschool {
-	static final public String VERSION_TEXT="Eschool 0.0.1 SNAPSHOT";
+import tk.circuitcoder.grafixplane.db.DatabaseManager;
+import tk.circuitcoder.grafixplane.db.H2DatabaseManager;
+import tk.circuitcoder.grafixplane.filter.ControlFilter;
+/**
+ * Represent a GrafixPlane instance, containing all runtime data
+ * @author CircuitCoder
+ * @since 0.0.1
+ */
+public class GrafixPlane {
+	static final public String VERSION_TEXT="GrafixPlane 0.0.1 SNAPSHOT";
 	static final public long VERSION=1L;
-	static private Eschool instance;
+	static private GrafixPlane instance;
 	
 	private Server webserver;
 	private Integer port;
@@ -50,20 +47,35 @@ public class Eschool {
 	private DatabaseManager db;
 	private boolean debug;
 	
+	/**
+	 * Static Method. Creates a new GrafixPlane instance and start it
+	 * @param options Options from the {@link Launcher}
+	 */
 	public static void start(OptionSet options) {
 		//configuration files goes here
 		try {
-			instance=new Eschool();
+			instance=new GrafixPlane();
 			instance.run(options);
 		} catch (Exception e) {
-			System.err.println("Unable to start the Eschool instance. Error: ");
+			System.err.println("Unable to start the GrafixPlane instance. Error: ");
 			e.printStackTrace();
 		}
 	}
 	
+	/**
+	 * Boots the entire system<br/>
+	 * Does the following works:<br/>
+	 * <ol>
+	 * <li>Configures the Logger</li>
+	 * <li>Verifies the database and creates essential slots</li>
+	 * <li>Configures the Jetty web server and starts+joins it</li>
+	 * </ol>
+	 * @param options Options from the {@link Launcher}
+	 * @throws Exception When an unexpected SQL error occurred or GrafixPlane failed to join the Jetty server
+	 */
 	private void run(OptionSet options) throws Exception {	
 		//Referred: http://logback.qos.ch/faq.html#sharedConfiguration
-		System.out.println("Starting Eschool Instance...");
+		System.out.println("Starting GrafixPlane Instance...");
 		
 		LoggerContext context=(LoggerContext) LoggerFactory.getILoggerFactory();
 		context.reset();
@@ -222,15 +234,15 @@ public class Eschool {
 			conn=db.getConn();
 		} catch (SQLException ex) {
 			//Create the Database
-			conn=db.getConn("", "", "eschool", false);
+			conn=db.getConn("", "", "GrafixPlane", false);
 		}
 		//Check if user table are exist
 		DatabaseMetaData dbmd=conn.getMetaData();
-		ResultSet tables=dbmd.getTables(null, null, "E_USER", new String[]{"TABLE"});
+		ResultSet tables=dbmd.getTables(null, null, "USER", new String[]{"TABLE"});
 		if(!tables.first()) {
-			this.logger.info("Creating table E_USER");
+			this.logger.info("Creating table USER");
 			Statement stat=conn.createStatement();
-			stat.execute("CREATE TABLE E_USER ("
+			stat.execute("CREATE TABLE USER ("
 					+ "Username varchar,"
 					+ "Passwd varchar,"
 					+ "Level tinyint(0)"
@@ -241,8 +253,8 @@ public class Eschool {
 		int passwd=rand.nextInt(100000000);
 		this.logger.info("Updating admin password: "+passwd);
 		Statement stat=conn.createStatement();
-		if(stat.executeUpdate("UPDATE E_USER SET Passwd = '"+passwd+"' WHERE Username = 'eschool_admin';")==0) { //IF NO line was updated
-			stat.executeUpdate("INSERT INTO E_USER VALUES ('eschool_admin','"+passwd+"',0);"); //TODO: Modifiable admin user name
+		if(stat.executeUpdate("UPDATE USER SET Passwd = '"+passwd+"' WHERE Username = 'GAdmin';")==0) { //IF NO line was updated
+			stat.executeUpdate("INSERT INTO USER VALUES ('GAdmin','"+passwd+"',0);"); //TODO: Modifiable admin user name
 		}
 		
 		this.logger.info("Starting WebServer on port "+port);
@@ -250,19 +262,36 @@ public class Eschool {
 		webserver.join();
 	}
 	
+	/**
+	 * Get the server-wide logger
+	 * @return The Logger registered using GrafixPlane's class name
+	 */
 	public Logger getLogger() {
 		return logger;
 	}
 	
+	/**
+	 * Get the database manager for this instance of GrafixPlane 
+	 * @return The database manager
+	 * @see tk.circuitcoder.grafixplane.db.DatabaseManager
+	 */
 	public DatabaseManager getDB() {
 		return db;
 	}
 	
+	/**
+	 * Indicate whether the server is running in debug mode
+	 * @return Whether running in debug mode
+	 */
 	public boolean isDebug() {
 		return debug;
 	}
 	
-	public static Eschool getEschool() {
+	/**
+	 * Get the GrafixPlane instance
+	 * @return the instance
+	 */
+	public static GrafixPlane getGP() {
 		return instance;
 	}
 }
