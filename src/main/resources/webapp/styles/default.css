@@ -3,7 +3,7 @@
 }
 
 .g_title {
-    color:#006195;
+    color:#CCCCCC;
     text-align:center;
     text-shadow: black 0px 0px 5px;
     font-size:3em;
@@ -16,6 +16,7 @@
     margin:5px;
     
     box-shadow:none;
+    outline: none;
     
     transition: box-shadow 0.5s;
 }
