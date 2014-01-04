@@ -35,7 +35,7 @@ public class AuthServlet extends HttpServlet {
 			if(uname==null||passwd==null) resp.getWriter().write("9"); //Something strange happened
 			else if(User.verify(uname, passwd)) {
 				resp.getWriter().write("0"); //login succeed
-				req.getSession().setAttribute("g_user", uname);
+				req.getSession().setAttribute("g_user", User.getUser(uname));
 			}
 			else resp.getWriter().write("1"); //login failed
 		}

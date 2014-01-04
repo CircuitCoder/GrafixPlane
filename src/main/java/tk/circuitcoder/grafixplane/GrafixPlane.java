@@ -236,25 +236,17 @@ public class GrafixPlane {
 			//Create the Database
 			conn=db.getConn("", "", "GrafixPlane", false);
 		}
-		//Check if user table are exist
-		DatabaseMetaData dbmd=conn.getMetaData();
-		ResultSet tables=dbmd.getTables(null, null, "USER", new String[]{"TABLE"});
-		if(!tables.first()) {
-			this.logger.info("Creating table USER");
-			Statement stat=conn.createStatement();
-			stat.execute("CREATE TABLE USER ("
-					+ "Username varchar,"
-					+ "Passwd varchar,"
-					+ "Level tinyint(0)"
-					+ ");");
-		}
+		
+		//Check if essential tables are exist
+		createTable(conn);
+		
 		//initialize the administrative account with random passwd
 		Random rand=new Random();
 		int passwd=rand.nextInt(100000000);
 		this.logger.info("Updating admin password: "+passwd);
 		Statement stat=conn.createStatement();
 		if(stat.executeUpdate("UPDATE USER SET Passwd = '"+passwd+"' WHERE Username = 'GAdmin';")==0) { //IF NO line was updated
-			stat.executeUpdate("INSERT INTO USER VALUES ('GAdmin','"+passwd+"',0);"); //TODO: Modifiable admin user name
+			stat.executeUpdate("INSERT INTO USER VALUES (0,'GAdmin','"+passwd+"',0);"); //TODO: Modifiable admin user name
 		}
 		
 		this.logger.info("Starting WebServer on port "+port);
@@ -293,5 +285,34 @@ public class GrafixPlane {
 	 */
 	public static GrafixPlane getGP() {
 		return instance;
+	}
+	
+	private void createTable(Connection conn) throws SQLException {
+		//Check if user table are exist
+		DatabaseMetaData dbmd=conn.getMetaData();
+		ResultSet tables=dbmd.getTables(null, null, "USER", new String[]{"TABLE"});
+		if(!tables.first()) {
+			this.logger.info("Creating table USER");
+			Statement stat=conn.createStatement();
+			stat.execute("CREATE TABLE USER ("
+					+ "UID int(10) UNSIGNED,"
+					+ "Username varchar,"
+					+ "Passwd varchar,"
+					+ "AccessLevel tinyint(3) UNSIGNED"
+					+ ");");
+		}
+		
+		tables=dbmd.getTables(null, null, "MAIL", new String[]{"TABLE"});
+		if(!tables.first()) {
+			this.logger.info("Creating table MAIL");
+			Statement stat=conn.createStatement();
+			stat.execute("CREATE TABLE MAIL ("
+					+ "MID int(10) UNSIGNED,"
+					+ "Sender int(10) UNSIGNED,"
+					+ "Receiver int(10) UNSIGNED,"
+					+ "Content varchar,"
+					+ "Attachment varchar"
+					+ ");");
+		}
 	}
 }

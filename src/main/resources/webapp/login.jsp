@@ -48,7 +48,7 @@
 		<%
 		} else {
 		%>
-		<h2>Hello, <%=User.getName(request) %></h2>
+		<h2>Hello, <%=User.getCurrentUser(request).getUsername() %></h2>
 		<a href="/auth?action=logout" class="g_button main_button">Logout</a>
 		<%
 		}
