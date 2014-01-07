@@ -9,6 +9,7 @@ import java.util.EnumSet;
 import java.util.Random;
 
 import javax.servlet.DispatcherType;
+
 import joptsimple.OptionSet;
 
 import org.eclipse.jetty.server.Server;
@@ -77,6 +78,139 @@ public class GrafixPlane {
 		//Referred: http://logback.qos.ch/faq.html#sharedConfiguration
 		System.out.println("Starting GrafixPlane Instance...");
 		
+		setupLogger();
+		
+		this.logger=LoggerFactory.getLogger(this.getClass());
+		if(debug) this.logger.error("Well this is a ERROR... For testing if logback is working");
+		this.logger.info("Logger configurated");
+		
+		port=(Integer) options.valueOf("p");
+		host=(String) options.valueOf("h");
+		debug=options.has("d");
+		if(debug) this.logger.info("Debug mode is enabled!");
+		
+		if(host==null) {
+			logger.error("You must specify a host using -h arg");
+			System.exit(-1);
+		}
+		if(host.endsWith("/")) host=host.substring(0,host.length()-2);
+		
+		if(!preInit()) {
+			logger.error("Pre-initializing section fails. Terminated");
+			System.exit(-1);
+		}
+		
+		webserver=new Server();
+		HandlerList handlers=new HandlerList();
+		
+		ServerConnector defaultConnector=new ServerConnector(webserver);
+		defaultConnector.setPort(80);
+		defaultConnector.setHost(host);
+		defaultConnector.setIdleTimeout(600);
+		webserver.addConnector(defaultConnector);
+		
+//		ServletContextHandler servletHandler=new ServletContextHandler(ServletContextHandler.SESSIONS);
+//		servletHandler.setContextPath("/");
+//		servletHandler.setVirtualHosts(new String[] {host});
+//		ServletHolder holder=new ServletHolder(new ControlServlet());
+//		holder.setInitParameter("baseDir",
+//				getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
+//		holder.setInitParameter("host", host);
+//		servletHandler.addServlet(holder, "/*");
+//		handlers.addHandler(servletHandler);
+		
+		WebAppContext webappHandler=new WebAppContext();
+		webappHandler.setServer(webserver);
+		webappHandler.setContextPath("/");
+		webappHandler.setVirtualHosts(new String[] {host});
+
+		webappHandler.setWelcomeFiles(new String[] {"/login.jsp"});
+		webappHandler.setResourceBase(this.getClass().getClassLoader().getResource("webapp").toExternalForm());
+		webappHandler.setDescriptor(this.getClass().getClassLoader().getResource("webapp/WEB-INF/web.xml").toExternalForm());
+		webappHandler.setParentLoaderPriority(true);
+		
+		FilterHolder holder=new FilterHolder(new ControlFilter());
+		holder.setInitParameter("baseDir",
+				getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
+		holder.setInitParameter("host", host);
+		webappHandler.addFilter(holder, "/*",EnumSet.of(DispatcherType.REQUEST,DispatcherType.FORWARD));
+		
+		handlers.addHandler(webappHandler);
+		
+//		ContextHandler imapHandler=new ContextHandler();
+		//to be finished
+
+		webserver.setHandler(handlers);
+		//Other POP IMAP SMTP Server...
+		
+		//TODO: add some options for databases
+		//Now default user & passwd
+		db=new H2DatabaseManager();
+		db.startDB(9750);
+		Connection conn;
+		try {
+			conn=db.getConn();
+		} catch (SQLException ex) {
+			//Create the Database
+			conn=db.getConn("", "", "GrafixPlane", false);
+		}
+		
+		//Check if essential tables are exist
+		createTable(conn);
+		
+		//initialize the administrative account with random passwd
+		Random rand=new Random();
+		int passwd=rand.nextInt(100000000);
+		this.logger.info("Updating admin password: "+passwd);
+		Statement stat=conn.createStatement();
+		if(stat.executeUpdate("UPDATE USER SET Passwd = '"+passwd+"' WHERE Username = 'GAdmin';")==0) { //IF NO line was updated
+			stat.executeUpdate("INSERT INTO USER VALUES (0,'GAdmin','"+passwd+"',0);"); //TODO: Modifiable admin user name
+		}
+		
+		if(!postInit(conn)) {
+			logger.error("Post-initializing section fails. Terminated");
+			System.exit(-1);
+		}
+		
+		this.logger.info("Starting WebServer on port "+port);
+		webserver.start();
+		webserver.join();
+	}
+
+	/**
+	 * Get the server-wide logger
+	 * @return The Logger registered using GrafixPlane's class name
+	 */
+	public Logger getLogger() {
+		return logger;
+	}
+	
+	/**
+	 * Get the database manager for this instance of GrafixPlane 
+	 * @return The database manager
+	 * @see tk.circuitcoder.grafixplane.db.DatabaseManager
+	 */
+	public DatabaseManager getDB() {
+		return db;
+	}
+	
+	/**
+	 * Indicate whether the server is running in debug mode
+	 * @return Whether running in debug mode
+	 */
+	public boolean isDebug() {
+		return debug;
+	}
+	
+	/**
+	 * Get the GrafixPlane instance
+	 * @return the instance
+	 */
+	public static GrafixPlane getGP() {
+		return instance;
+	}
+	
+	private void setupLogger() {
 		LoggerContext context=(LoggerContext) LoggerFactory.getILoggerFactory();
 		context.reset();
 		ch.qos.logback.classic.Logger rootLogger =
@@ -165,126 +299,6 @@ public class GrafixPlane {
 		rootLogger.addAppender(consoleAppender);
 		rootLogger.addAppender(infoAppender);
 		rootLogger.addAppender(debugAppender);
-		
-		
-		this.logger=LoggerFactory.getLogger(this.getClass());
-		if(debug) this.logger.error("Well this is a ERROR... For testing if logback is working");
-		this.logger.info("Logger configurated");
-		
-		port=(Integer) options.valueOf("p");
-		host=(String) options.valueOf("h");
-		debug=options.has("d");
-		if(debug) this.logger.info("Debug mode is enabled!");
-		
-		if(host==null) {
-			logger.error("You must specify a host using -h arg");
-			System.exit(-1);
-		}
-		if(host.endsWith("/")) host=host.substring(0,host.length()-2);
-		
-		webserver=new Server();
-		HandlerList handlers=new HandlerList();
-		
-		ServerConnector defaultConnector=new ServerConnector(webserver);
-		defaultConnector.setPort(80);
-		defaultConnector.setHost(host);
-		defaultConnector.setIdleTimeout(600);
-		webserver.addConnector(defaultConnector);
-		
-//		ServletContextHandler servletHandler=new ServletContextHandler(ServletContextHandler.SESSIONS);
-//		servletHandler.setContextPath("/");
-//		servletHandler.setVirtualHosts(new String[] {host});
-//		ServletHolder holder=new ServletHolder(new ControlServlet());
-//		holder.setInitParameter("baseDir",
-//				getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
-//		holder.setInitParameter("host", host);
-//		servletHandler.addServlet(holder, "/*");
-//		handlers.addHandler(servletHandler);
-		
-		WebAppContext webappHandler=new WebAppContext();
-		webappHandler.setServer(webserver);
-		webappHandler.setContextPath("/");
-		webappHandler.setVirtualHosts(new String[] {host});
-
-		webappHandler.setWelcomeFiles(new String[] {"/login.jsp"});
-		webappHandler.setResourceBase(this.getClass().getClassLoader().getResource("webapp").toExternalForm());
-		webappHandler.setDescriptor(this.getClass().getClassLoader().getResource("webapp/WEB-INF/web.xml").toExternalForm());
-		webappHandler.setParentLoaderPriority(true);
-		
-		FilterHolder holder=new FilterHolder(new ControlFilter());
-		holder.setInitParameter("baseDir",
-				getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
-		holder.setInitParameter("host", host);
-		webappHandler.addFilter(holder, "/*",EnumSet.of(DispatcherType.REQUEST,DispatcherType.FORWARD));
-		
-		handlers.addHandler(webappHandler);
-		
-//		ContextHandler imapHandler=new ContextHandler();
-		//to be finished
-
-		webserver.setHandler(handlers);
-		//Other POP IMAP SMTP Server...
-		
-		//TODO: add some options for databases
-		//Now default user & passwd
-		db=new H2DatabaseManager();
-		db.startDB(9750);
-		Connection conn;
-		try {
-			conn=db.getConn();
-		} catch (SQLException ex) {
-			//Create the Database
-			conn=db.getConn("", "", "GrafixPlane", false);
-		}
-		
-		//Check if essential tables are exist
-		createTable(conn);
-		
-		//initialize the administrative account with random passwd
-		Random rand=new Random();
-		int passwd=rand.nextInt(100000000);
-		this.logger.info("Updating admin password: "+passwd);
-		Statement stat=conn.createStatement();
-		if(stat.executeUpdate("UPDATE USER SET Passwd = '"+passwd+"' WHERE Username = 'GAdmin';")==0) { //IF NO line was updated
-			stat.executeUpdate("INSERT INTO USER VALUES (0,'GAdmin','"+passwd+"',0);"); //TODO: Modifiable admin user name
-		}
-		
-		this.logger.info("Starting WebServer on port "+port);
-		webserver.start();
-		webserver.join();
-	}
-	
-	/**
-	 * Get the server-wide logger
-	 * @return The Logger registered using GrafixPlane's class name
-	 */
-	public Logger getLogger() {
-		return logger;
-	}
-	
-	/**
-	 * Get the database manager for this instance of GrafixPlane 
-	 * @return The database manager
-	 * @see tk.circuitcoder.grafixplane.db.DatabaseManager
-	 */
-	public DatabaseManager getDB() {
-		return db;
-	}
-	
-	/**
-	 * Indicate whether the server is running in debug mode
-	 * @return Whether running in debug mode
-	 */
-	public boolean isDebug() {
-		return debug;
-	}
-	
-	/**
-	 * Get the GrafixPlane instance
-	 * @return the instance
-	 */
-	public static GrafixPlane getGP() {
-		return instance;
 	}
 	
 	private void createTable(Connection conn) throws SQLException {
@@ -314,5 +328,20 @@ public class GrafixPlane {
 					+ "Attachment varchar"
 					+ ");");
 		}
+	}
+	
+	private boolean preInit() {
+		return true;
+	}
+	
+	private boolean postInit(Connection conn) {
+		try {
+			Mail.init(conn);
+			User.init(conn);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+		return true;
 	}
 }

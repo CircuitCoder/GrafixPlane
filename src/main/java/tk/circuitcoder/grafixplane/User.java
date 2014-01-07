@@ -1,8 +1,9 @@
 package tk.circuitcoder.grafixplane;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
+import java.sql.SQLException;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -18,6 +19,9 @@ public class User {
 	private int UID;
 	private String username;
 	private int accessLevel;
+	
+	private static PreparedStatement userByID;
+	private static PreparedStatement userByName;
 	
 	public int getUID() {
 		return UID;	
@@ -79,12 +83,10 @@ public class User {
 	 */
 	public static boolean verify(String uname,String passwd) {
 		try {
-			Connection conn=GrafixPlane.getGP().getDB().getConn();
-			Statement stat=conn.createStatement();
-			ResultSet result=stat.executeQuery("SELECT * FROM USER WHERE(Username='"+uname+"');");
-			GrafixPlane.getGP().getLogger().info("SELECT * FROM USER WHERE(Username='"+uname+"');");
+			userByName.setString(1, uname);
+			ResultSet result=userByName.executeQuery();
 			if(!result.first()) return false;
-			String storedPasswd=result.getString("Passwd");
+			String storedPasswd=result.getString(3);
 			if(storedPasswd==null||!storedPasswd.equalsIgnoreCase(passwd)) return false;
 			else return true;
 		} catch (Exception e) {
@@ -100,9 +102,8 @@ public class User {
 	 */
 	public static User getUser(String uname) {
 		try {
-			Connection conn=GrafixPlane.getGP().getDB().getConn();
-			Statement stat=conn.createStatement();
-			ResultSet resultSet=stat.executeQuery("SELECT * FROM USER WHERE(Username='"+uname+"')");
+			userByName.setString(1, uname);
+			ResultSet resultSet=userByName.executeQuery();
 			if(!resultSet.first()) return null;
 			
 			User result=new User();
@@ -123,19 +124,23 @@ public class User {
 	 */
 	public static User getUser(int UID) {
 		try {
-			Connection conn=GrafixPlane.getGP().getDB().getConn();
-			Statement stat=conn.createStatement();
-			ResultSet resultSet=stat.executeQuery("SELECT * FROM USER WHERE(UID="+UID+")");
+			userByID.setInt(1, UID);
+			ResultSet resultSet=userByID.executeQuery();
 			if(!resultSet.first()) return null;
 			
 			User result=new User();
 			result.UID=UID;
-			result.username=resultSet.getString("Username");
-			result.accessLevel=resultSet.getInt("AccessLevel");
+			result.username=resultSet.getString(2);
+			result.accessLevel=resultSet.getInt(4);
 			return result;
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			return null;
 		}
+	}
+	
+	public static void init(Connection conn) throws SQLException {
+		userByID=conn.prepareStatement("SELECT * FROM USER WHERE(UID=?)");
+		userByName=conn.prepareStatement("SELECT * FROM USER WHERE(Username=?)");
 	}
 }
