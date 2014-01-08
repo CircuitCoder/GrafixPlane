@@ -37,8 +37,8 @@ import tk.circuitcoder.grafixplane.filter.ControlFilter;
  * @since 0.0.1
  */
 public class GrafixPlane {
-	static final public String VERSION_TEXT="GrafixPlane 0.0.1 SNAPSHOT";
-	static final public long VERSION=1L;
+	static final public String VERSION_TEXT="GrafixPlane 0.0.2 SNAPSHOT";
+	static final public long VERSION=2L;
 	static private GrafixPlane instance;
 	
 	private Server webserver;
@@ -77,6 +77,8 @@ public class GrafixPlane {
 	private void run(OptionSet options) throws Exception {	
 		//Referred: http://logback.qos.ch/faq.html#sharedConfiguration
 		System.out.println("Starting GrafixPlane Instance...");
+		System.out.print("Version: ");
+		System.out.println(VERSION_TEXT);
 		
 		setupLogger();
 		
