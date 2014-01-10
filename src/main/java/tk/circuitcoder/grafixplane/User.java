@@ -22,6 +22,7 @@ public class User {
 	
 	private static PreparedStatement userByID;
 	private static PreparedStatement userByName;
+	private static PreparedStatement newUser;
 	
 	public int getUID() {
 		return UID;	
@@ -32,6 +33,17 @@ public class User {
 	
 	public int getAccessLevel() {
 		return accessLevel;
+	}
+	
+	public static enum AccessLevel {
+		ROOT(0,"Root User"),ADMIN(1,"Administrator");
+		int value; //The value stored in the database, representing this level
+		String display; //The string displayed in the account information page
+		
+		private AccessLevel(int v,String ds) {
+			value=v;
+			display=ds;
+		}
 	}
 	
 	/**
@@ -137,6 +149,10 @@ public class User {
 			ex.printStackTrace();
 			return null;
 		}
+	}
+	
+	public static User newUser(String name,String passwd,AccessLevel level) {
+		return null;
 	}
 	
 	public static void init(Connection conn) throws SQLException {

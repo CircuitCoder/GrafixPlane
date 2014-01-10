@@ -5,6 +5,7 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Random;
 
@@ -47,6 +48,7 @@ public class GrafixPlane {
 	private Logger logger;
 	private DatabaseManager db;
 	private boolean debug;
+	private Config config;
 	
 	/**
 	 * Static Method. Creates a new GrafixPlane instance and start it
@@ -160,13 +162,15 @@ public class GrafixPlane {
 		//Check if essential tables are exist
 		createTable(conn);
 		
+		if(config==null) config=new Config(conn);
+		
 		//initialize the administrative account with random passwd
 		Random rand=new Random();
 		int passwd=rand.nextInt(100000000);
 		this.logger.info("Updating admin password: "+passwd);
 		Statement stat=conn.createStatement();
-		if(stat.executeUpdate("UPDATE USER SET Passwd = '"+passwd+"' WHERE Username = 'GAdmin';")==0) { //IF NO line was updated
-			stat.executeUpdate("INSERT INTO USER VALUES (0,'GAdmin','"+passwd+"',0);"); //TODO: Modifiable admin user name
+		if(stat.executeUpdate("UPDATE USER SET Passwd = '"+passwd+"' WHERE Username = 'GAdmin'")==0) { //IF NO line was updated
+			stat.executeUpdate("INSERT INTO USER VALUES (0,'GAdmin','"+passwd+"',0)"); //TODO: Modifiable admin user name
 		}
 		
 		if(!postInit(conn)) {
@@ -306,7 +310,21 @@ public class GrafixPlane {
 	private void createTable(Connection conn) throws SQLException {
 		//Check if user table are exist
 		DatabaseMetaData dbmd=conn.getMetaData();
-		ResultSet tables=dbmd.getTables(null, null, "USER", new String[]{"TABLE"});
+		ResultSet tables=dbmd.getTables(null, null, "GRAFIX", new String[]{"TABLE"});
+		if(!tables.first()) {
+			this.logger.info("Creating table GRAFIX");
+			Statement stat=conn.createStatement();
+			stat.execute("CREATE TABLE GRAFIX ("
+					+ "Entry varchar,"
+					+ "Value varchar"
+					+ ")");
+			
+			config=new Config();
+			config.init(conn, Arrays.asList("mailCount|0","userCount|0"));
+		}
+		
+		
+		tables=dbmd.getTables(null, null, "USER", new String[]{"TABLE"});
 		if(!tables.first()) {
 			this.logger.info("Creating table USER");
 			Statement stat=conn.createStatement();
@@ -325,10 +343,24 @@ public class GrafixPlane {
 			stat.execute("CREATE TABLE MAIL ("
 					+ "MID int(10) UNSIGNED,"
 					+ "Sender int(10) UNSIGNED,"
-					+ "Receiver int(10) UNSIGNED,"
+					+ "Receiver varchar,"	//Syntax: MID||MID||MID||...MID||
 					+ "Content varchar,"
-					+ "Attachment varchar"
+					+ "Attachment varchar,"	//Syntax: FID||FID||FID||...FID||
+					+ "ReplyTo int(10) UNSIGNED" //0 for new mail
 					+ ");");
+		}
+		
+		tables=dbmd.getTables(null, null, "MAILBOX", new String[]{"TABLE"});
+		if(!tables.first()) {
+			this.logger.info("Creating table MAILBOX");
+			Statement stat=conn.createStatement();
+			stat.execute("CREATE TABLE MAILBOX ("
+					+ "UID int(10) UNSIGNED,"	//The UID of its owner
+					+ "BoxIndex smallint,"	//The index of this Box
+					+ "Mails varchar,"	//Mails, Syntax: ......||MID@Box'Type,status||......
+					+ "MailCount smallint,"	//How many mails are there in this box
+					+ ");");
+
 		}
 	}
 	

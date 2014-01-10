@@ -23,6 +23,8 @@ public class Mail {
 	//TODO: Group & visited
 	
 	private static PreparedStatement mailByID;
+
+	private Mail() {}
 	
 	public static Set<Mail> getMailByReceiver(int UID) {
 		return null;
