@@ -29,6 +29,7 @@ import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.FileAppender;
 import ch.qos.logback.core.filter.AbstractMatcherFilter;
 import ch.qos.logback.core.spi.FilterReply;
+import tk.circuitcoder.grafixplane.User.AccessLevel;
 import tk.circuitcoder.grafixplane.db.DatabaseManager;
 import tk.circuitcoder.grafixplane.db.H2DatabaseManager;
 import tk.circuitcoder.grafixplane.filter.ControlFilter;
@@ -164,18 +165,21 @@ public class GrafixPlane {
 		
 		if(config==null) config=new Config(conn);
 		
+		if(!postInit(conn)) {
+			logger.error("Post-initializing section fails. Terminated");
+			System.exit(-1);
+		}
+		
 		//initialize the administrative account with random passwd
 		Random rand=new Random();
 		int passwd=rand.nextInt(100000000);
 		this.logger.info("Updating admin password: "+passwd);
-		Statement stat=conn.createStatement();
-		if(stat.executeUpdate("UPDATE USER SET Passwd = '"+passwd+"' WHERE Username = 'GAdmin'")==0) { //IF NO line was updated
-			stat.executeUpdate("INSERT INTO USER VALUES (0,'GAdmin','"+passwd+"',0)"); //TODO: Modifiable admin user name
-		}
-		
-		if(!postInit(conn)) {
-			logger.error("Post-initializing section fails. Terminated");
-			System.exit(-1);
+//		Statement stat=conn.createStatement();
+//		if(stat.executeUpdate("UPDATE USER SET Passwd = '"+passwd+"' WHERE Username = 'GAdmin'")==0) { //IF NO line was updated
+//			stat.executeUpdate("INSERT INTO USER VALUES (0,'GAdmin','"+passwd+"',0)"); //TODO: Modifiable admin user name
+//		}
+		if(!User.modifyPasswd(0, String.valueOf(passwd))) {
+			User.overrideUser(0,"GAdmin", String.valueOf(passwd), AccessLevel.ROOT);
 		}
 		
 		this.logger.info("Starting WebServer on port "+port);
@@ -198,6 +202,15 @@ public class GrafixPlane {
 	 */
 	public DatabaseManager getDB() {
 		return db;
+	}
+	
+	/**
+	 * Get the configuration (stored in the database) of this instance of GrafixPlane
+	 * @return The Config object
+	 * @see tk.circuitcoder.grafixplane.Config
+	 */
+	public Config getConfig() {
+		return config;
 	}
 	
 	/**
@@ -320,7 +333,7 @@ public class GrafixPlane {
 					+ ")");
 			
 			config=new Config();
-			config.init(conn, Arrays.asList("mailCount|0","userCount|0"));
+			config.init(conn, Arrays.asList("mailCount:0","userCount:0")); //Initialize the table
 		}
 		
 		

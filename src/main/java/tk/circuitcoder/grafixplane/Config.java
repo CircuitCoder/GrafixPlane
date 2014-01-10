@@ -55,13 +55,15 @@ public class Config {
 	}
 	
 	public boolean init(Connection conn,List<String> pairs) {
+		GrafixPlane.getGP().getLogger().info("First run...");
 		try {
 			PreparedStatement stat=conn.prepareStatement("INSERT INTO GRAFIX VALUES (?,?)");
 			String k,v;
 			configs=new HashMap<String,String>(); //Create a new map
 			for(String each:pairs) {
-				k=each.split("|")[0];
-				v=each.split("|")[1];
+				k=each.split(":")[0];
+				v=each.split(":")[1];
+				GrafixPlane.getGP().getLogger().info("Initializing Key-Value pair: "+k+' '+v);
 				stat.setString(1,k);
 				stat.setString(2,v);
 				stat.execute();
@@ -94,4 +96,5 @@ public class Config {
 		}
 		return true;
 	}
+	//TODO: not saving
 }

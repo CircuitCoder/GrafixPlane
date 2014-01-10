@@ -9,6 +9,8 @@ import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import static tk.circuitcoder.grafixplane.GrafixPlane.*;
+
 /**
  * Represents a GrafixPlane User</br>
  * Provides some utilities related to authorization and accounts
@@ -22,7 +24,8 @@ public class User {
 	
 	private static PreparedStatement userByID;
 	private static PreparedStatement userByName;
-	private static PreparedStatement newUser;
+	private static PreparedStatement modifyUser;
+	private static PreparedStatement modifyPasswd;
 	
 	public int getUID() {
 		return UID;	
@@ -151,12 +154,69 @@ public class User {
 		}
 	}
 	
-	public static User newUser(String name,String passwd,AccessLevel level) {
-		return null;
+	/**
+	 * Add a new user into GrafixPlane
+	 * @param name The new user's name
+	 * @param passwd The new user's password
+	 * @param level The access level that would be assigned to the user
+	 * @return
+	 */
+	public synchronized static User newUser(String name,String passwd,AccessLevel level) {
+		int newID=getGP().getConfig().getInt("userCount")+1;
+		getGP().getConfig().setInt("userCount", newID);
+		
+		try {
+			userByName.setString(1,name);
+			if(!userByName.execute()) return null;	//A user with same name already exists
+		} catch(SQLException e) {
+			e.printStackTrace();
+			return null;	//Unknowing whether a user with the same name already exists, interpreting as yes
+		}
+
+		return overrideUser(newID, name, passwd, level);
+	}
+	
+	public synchronized static User overrideUser(int UID,String name,String passwd,AccessLevel level) {
+		try {
+			modifyUser.setInt(1,UID);
+			modifyUser.setString(2,name);
+			modifyUser.setString(3,passwd);
+			modifyUser.setInt(4,level.value);
+			modifyUser.execute();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+		
+		User result=new User();
+		result.UID=UID;
+		result.accessLevel=level.value;
+		result.username=name;
+		return result;
+	}
+	
+	/**
+	 * Update a user's password with a new one
+	 * @param UID The target user's ID
+	 * @param passwd The new password
+	 * @return <em>true</em> if the password is updated, or <em>false</em> if the user dosen't exist 
+	 * or there are something wrong with the SQL query
+	 */
+	public synchronized static boolean modifyPasswd(int UID,String passwd) {
+		try {
+			modifyPasswd.setInt(2,UID);
+			modifyPasswd.setString(1,passwd);
+			return modifyPasswd.executeUpdate()==1;
+		} catch(SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
 	}
 	
 	public static void init(Connection conn) throws SQLException {
 		userByID=conn.prepareStatement("SELECT * FROM USER WHERE(UID=?)");
 		userByName=conn.prepareStatement("SELECT * FROM USER WHERE(Username=?)");
+		modifyUser=conn.prepareStatement("INSERT INTO USER VALUES (?,?,?,?)");
+		modifyPasswd=conn.prepareStatement("UPDATE USER SET Passwd = ? WHERE UID = ?");
 	}
 }
