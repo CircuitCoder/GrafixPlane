@@ -80,10 +80,9 @@ public class Config {
 		try {
 			PreparedStatement stat=conn.prepareStatement("UPDATE GRAFIX SET Value = ? WHERE Entry = ?");
 			PreparedStatement newEntry=conn.prepareStatement("INSERT INTO GRAFIX VALUES (?,?)");
-			configs=new HashMap<String,String>(); //Create a new map
 			for(String k:configs.keySet()) {
-				stat.setString(1,k);
-				stat.setString(2,configs.get(k));
+				stat.setString(2,k);
+				stat.setString(1,configs.get(k));
 				if(stat.executeUpdate()==0) {
 					newEntry.setString(1,k);
 					newEntry.setString(2,configs.get(k));

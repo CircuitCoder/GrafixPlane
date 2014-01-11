@@ -50,6 +50,7 @@ public class GrafixPlane {
 	private DatabaseManager db;
 	private boolean debug;
 	private Config config;
+	private Connection conn;
 	
 	/**
 	 * Static Method. Creates a new GrafixPlane instance and start it
@@ -152,7 +153,6 @@ public class GrafixPlane {
 		//Now default user & passwd
 		db=new H2DatabaseManager();
 		db.startDB(9750);
-		Connection conn;
 		try {
 			conn=db.getConn();
 		} catch (SQLException ex) {
@@ -174,17 +174,19 @@ public class GrafixPlane {
 		Random rand=new Random();
 		int passwd=rand.nextInt(100000000);
 		this.logger.info("Updating admin password: "+passwd);
-//		Statement stat=conn.createStatement();
-//		if(stat.executeUpdate("UPDATE USER SET Passwd = '"+passwd+"' WHERE Username = 'GAdmin'")==0) { //IF NO line was updated
-//			stat.executeUpdate("INSERT INTO USER VALUES (0,'GAdmin','"+passwd+"',0)"); //TODO: Modifiable admin user name
-//		}
 		if(!User.modifyPasswd(0, String.valueOf(passwd))) {
 			User.overrideUser(0,"GAdmin", String.valueOf(passwd), AccessLevel.ROOT);
 		}
 		
 		this.logger.info("Starting WebServer on port "+port);
 		webserver.start();
-		webserver.join();
+		
+		Commander cmd=new Commander(true);
+		cmd.startLoop();
+		
+		logger.info("Shuting down GrafixPlane...");
+		onExit();
+		return;
 	}
 
 	/**
@@ -202,6 +204,14 @@ public class GrafixPlane {
 	 */
 	public DatabaseManager getDB() {
 		return db;
+	}
+	
+	/**
+	 * Get the shared database connection for GrafixPlane
+	 * @return
+	 */
+	public Connection getConn() {
+		return conn;
 	}
 	
 	/**
@@ -385,6 +395,19 @@ public class GrafixPlane {
 		try {
 			Mail.init(conn);
 			User.init(conn);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+	}
+	
+	private boolean onExit() {
+		try {
+			webserver.stop();
+			config.save(conn);
+			conn.close();
+			db.stopDB();
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;

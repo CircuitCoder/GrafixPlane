@@ -12,6 +12,7 @@
 		<LB_VER>1.0.13</LB_VER>
 		<JOOQ_VER>3.2.0</JOOQ_VER>
 		<JUNIT_VER>4.11</JUNIT_VER>
+		<JLINE_VER>2.11</JLINE_VER>
 	</properties>
 
 	<build>
@@ -168,6 +169,11 @@
 			<artifactId>junit</artifactId>
 			<version>${JUNIT_VER}</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>jline</groupId>
+			<artifactId>jline</artifactId>
+			<version>${JLINE_VER}</version>
 		</dependency>
 	</dependencies>
 </project>
