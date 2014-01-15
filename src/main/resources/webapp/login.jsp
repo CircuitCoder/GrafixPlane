@@ -35,7 +35,7 @@
 		<hr/>
 		
 		<%
-		if(!User.isLogined(request)) //not currently logined
+		if(!User.isLogined(request.getSession())) //not currently logined
 		{
 		%>
 		
@@ -48,7 +48,7 @@
 		<%
 		} else {
 		%>
-		<h2>Hello, <%=User.getCurrentUser(request).getUsername() %></h2>
+		<h2>Hello, <%=User.getCurrentUser(request.getSession()).getUsername() %></h2>
 		<a href="/auth?action=logout" class="g_button main_button">Logout</a>
 		<%
 		}

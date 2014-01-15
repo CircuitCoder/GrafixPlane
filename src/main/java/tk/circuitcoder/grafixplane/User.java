@@ -4,9 +4,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import static tk.circuitcoder.grafixplane.GrafixPlane.*;
@@ -22,10 +23,14 @@ public class User {
 	private String username;
 	private AccessLevel accessLevel;
 	private int boxCount;
+	private HashSet<HttpSession> sessions;
 	
 	private static PreparedStatement userByID;
 	private static PreparedStatement userByName;
 	private static PreparedStatement newUser;
+	
+	private static HashMap<Integer,User> userPool;
+	//TODO: clear user with no session logged in when ran out of memory
 	
 	public int getUID() {
 		return UID;	
@@ -101,6 +106,28 @@ public class User {
 	}
 	
 	/**
+	 * Set the provided session's user with this user, and add it into this user's session set
+	 * @param session The provided session
+	 * @return <tt>true</tt> if this session hasn't login yet
+	 */
+	public boolean loginSession(HttpSession session) {
+		if(session.getAttribute("g_user")!=null) return false;
+		session.setAttribute("g_user", this);
+		return sessions.add(session);
+	}
+	
+	/**
+	 * Remove the session away from this user's session set, and end the session
+	 * @param session The provided session
+	 * @return <tt>true</tt> if this session was logged in to this user
+	 */
+	public boolean logoutSession(HttpSession session) {
+		if(!sessions.remove(session)) return false;
+		session.invalidate();
+		return true;
+	}
+	
+	/**
 	 * User instance can only be created by calling getUser()
 	 */
 	private User(int UID,String uname,AccessLevel level,int BoxCount) {
@@ -108,25 +135,24 @@ public class User {
 		this.username=uname;
 		this.accessLevel=level;
 		this.boxCount=BoxCount;
+		this.sessions=new HashSet<HttpSession>();
 	}
 	
 	/**
-	 * Checks if the incoming request's session is logined
-	 * @param req The HTTP request
-	 * @return
+	 * Checks if the incoming request's session is logged in
+	 * @param session The HTTP session
+	 * @return <tt>true</tt> if this session is logged in
 	 */
-	public static boolean isLogined(HttpServletRequest req) {
-		return !(getCurrentUser(req)==null);
+	public static boolean isLogined(HttpSession session) {
+		return session.getAttribute("g_user")!=null;
 	}
 	
 	/**
-	 * Gets the current logined user
-	 * @param req The HTTP request
-	 * @return The user of this session, or <strong>NULL</strong> if the session isn't currently logined 
+	 * Gets the current logged in user
+	 * @param session The HTTP session
+	 * @return The user of this session, or <strong>NULL</strong> if the session isn't currently logged in 
 	 */
-	public static User getCurrentUser(HttpServletRequest req) {
-		HttpSession session=req.getSession();
-		if(session.isNew()) session.setMaxInactiveInterval(600);
+	public static User getCurrentUser(HttpSession session) {
 		return (User) session.getAttribute("g_user");
 	}
 	
@@ -160,28 +186,37 @@ public class User {
 		userByName.setString(1, uname);
 		ResultSet resultSet=userByName.executeQuery();
 		if(!resultSet.first()) return null;
+		int UID=resultSet.getInt(1);
+		if(userPool.containsKey(UID)) return userPool.get(UID);
 		
-		return new User(resultSet.getInt(1),
+		User newUser=new User(resultSet.getInt(1),
 				uname,
 				AccessLevel.valueOf(resultSet.getInt(4)),
 				resultSet.getInt(5));
+		userPool.put(UID, newUser);
+		return newUser;
 	}
 	
 	/**
-	 * Gets a user's information and creates the User instance base on its ID
+	 * Gets a user's information and creates the User instance base on its ID<br/>
+	 * If there this user has been logged in, and still stored in the user pool, just return the exact same user
 	 * @param UID The user's ID
 	 * @return The created instance, or Null if the user is not found
 	 * @throws SQLException If there are some thing wrong with the database
 	 */
 	public static User getUser(int UID) throws SQLException {
+		if(userPool.containsKey(UID)) return userPool.get(UID);
+		
 		userByID.setInt(1, UID);
 		ResultSet resultSet=userByID.executeQuery();
 		if(!resultSet.first()) return null;
-			
-		return new User(UID,
+		
+		User newUser=new User(UID,
 				resultSet.getString(2),
 				AccessLevel.valueOf(resultSet.getInt(4)),
 				resultSet.getInt(5));
+		userPool.put(UID, newUser);
+		return newUser;
 	}
 	
 	/**
@@ -276,5 +311,6 @@ public class User {
 		userByID=conn.prepareStatement("SELECT * FROM USER WHERE UID = ?");
 		userByName=conn.prepareStatement("SELECT * FROM USER WHERE Username = ?");
 		newUser=conn.prepareStatement("INSERT INTO USER VALUES (?,?,?,?,?)");
+		userPool=new HashMap<Integer,User>();
 	}
 }

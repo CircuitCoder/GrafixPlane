@@ -40,7 +40,7 @@ public class ControlFilter implements Filter {
 		String uri=req.getRequestURI();
 		if(uri.length()!=1&&uri.endsWith("/")) uri=uri.substring(0, uri.length()-1);
 		
-		GrafixPlane.getGP().getLogger().info("Client "+req.getRemoteAddr()+" requested "+uri);
+		GrafixPlane.getGP().getLogger().debug("Client "+req.getRemoteAddr()+" requested "+uri);
 		
 		req.setAttribute("g_host", host);
 		req.setAttribute("g_uri", uri);
