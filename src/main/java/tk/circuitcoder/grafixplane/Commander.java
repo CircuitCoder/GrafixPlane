@@ -35,7 +35,7 @@ public class Commander {
 	
 	public void startLoop() {
 		String input;
-		while(!(input=read()).toLowerCase().equals("stop")) {
+		while((input=read())!=null) {
 			getGP().getLogger().debug("Console issuing: "+input);
 			String[] args=input.split(" ");
 			//TODO: Other commands
@@ -45,6 +45,10 @@ public class Commander {
 					if(User.newUser(args[1], args[2], AccessLevel.ADMIN)!=null)
 						getGP().getLogger().info("Added!");
 					else getGP().getLogger().info("Failed!");
+				}
+				else if(args[0].toLowerCase().equals("stop")) {
+					getGP().shutdown();
+					System.exit(0);
 				}
 				else if(args[0].toLowerCase().equals("userauth"))
 					getGP().getLogger().info(String.valueOf(User.verify(args[1], args[2])));
@@ -56,6 +60,10 @@ public class Commander {
 				getGP().getLogger().error("Unknow error. Type '?' to get help");
 			}
 		}
+		//Ctrl-D!
+		getGP().getLogger().info("EOF detected");
+		getGP().shutdown();
+		System.exit(0);
 	}
 	
 	private String read() {

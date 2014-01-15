@@ -64,7 +64,17 @@ public class GrafixPlane {
 		} catch (Exception e) {
 			System.err.println("Unable to start the GrafixPlane instance. Error: ");
 			e.printStackTrace();
+			System.exit(-1);
 		}
+	}
+	
+	/**
+	 * Emergency stop
+	 */
+	public static void stop() {
+		instance.logger.info("Some serious happened...");
+		instance.shutdown();
+		System.exit(-1);
 	}
 	
 	/**
@@ -175,7 +185,7 @@ public class GrafixPlane {
 		int passwd=rand.nextInt(100000000);
 		this.logger.info("Updating admin password: "+passwd);
 		if(!User.modifyPasswd(0, String.valueOf(passwd))) {
-			User.overrideUser(0,"GAdmin", String.valueOf(passwd), AccessLevel.ROOT);
+			User.newUser(0,"GAdmin", String.valueOf(passwd), AccessLevel.ROOT);
 		}
 		
 		this.logger.info("Starting WebServer on port "+port);
@@ -183,7 +193,9 @@ public class GrafixPlane {
 		
 		Commander cmd=new Commander(true);
 		cmd.startLoop();
-		
+	}
+	
+	public void shutdown() {
 		logger.info("Shuting down GrafixPlane...");
 		onExit();
 		return;
@@ -343,7 +355,7 @@ public class GrafixPlane {
 					+ ")");
 			
 			config=new Config();
-			config.init(conn, Arrays.asList("mailCount:0","userCount:0")); //Initialize the table
+			config.init(conn, Arrays.asList("mailCount:0","UIDCount:0")); //Initialize the table
 		}
 		
 		
@@ -355,7 +367,8 @@ public class GrafixPlane {
 					+ "UID int(10) UNSIGNED,"
 					+ "Username varchar,"
 					+ "Passwd varchar,"
-					+ "AccessLevel tinyint(3) UNSIGNED"
+					+ "AccessLevel tinyint(3) UNSIGNED,"
+					+ "BoxCount tinyint UNSIGNED"	//How many mailboxes belongs to this user
 					+ ");");
 		}
 		

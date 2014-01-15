@@ -1,6 +1,8 @@
 package tk.circuitcoder.grafixplane.servlet;
 
 import java.io.IOException;
+import java.sql.SQLException;
+
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -35,7 +37,12 @@ public class AuthServlet extends HttpServlet {
 			if(uname==null||passwd==null) resp.getWriter().write("9"); //Something strange happened
 			else if(User.verify(uname, passwd)) {
 				resp.getWriter().write("0"); //login succeed
-				req.getSession().setAttribute("g_user", User.getUser(uname));
+				try {
+					req.getSession().setAttribute("g_user", User.getUser(uname));
+				} catch (SQLException e) {
+					resp.sendRedirect("#E:"+e.getLocalizedMessage());
+					e.printStackTrace();
+				}
 			}
 			else resp.getWriter().write("1"); //login failed
 		}

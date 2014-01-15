@@ -17,15 +17,15 @@ import static tk.circuitcoder.grafixplane.GrafixPlane.*;
  * @author CircuitCoder
  * @since 0.0.1
  */
-public class User {
+public class User { 
 	private int UID;
 	private String username;
-	private int accessLevel;
+	private AccessLevel accessLevel;
+	private int boxCount;
 	
 	private static PreparedStatement userByID;
 	private static PreparedStatement userByName;
-	private static PreparedStatement modifyUser;
-	private static PreparedStatement modifyPasswd;
+	private static PreparedStatement newUser;
 	
 	public int getUID() {
 		return UID;	
@@ -34,8 +34,19 @@ public class User {
 		return username;
 	}
 	
-	public int getAccessLevel() {
+	public AccessLevel getAccessLevel() {
 		return accessLevel;
+	}
+	
+	public boolean modifyPasswd(String passwd) throws SQLException {
+		try {
+			return modifyPasswd(UID, passwd);
+		} catch (NameExistsException e) {
+			//This shouldn't happen
+			e.printStackTrace();
+			GrafixPlane.stop();
+			return false;
+		}
 	}
 	
 	public static enum AccessLevel {
@@ -47,6 +58,30 @@ public class User {
 			value=v;
 			display=ds;
 		}
+		
+		/**
+		 * Get the AccessLevel object based on its value
+		 * @param level The value of this level
+		 * @return The AccessLevel object, or <em>null</em> if their are no level matches this value
+		 */
+		public static AccessLevel valueOf(int level) {
+			switch (level) {
+			case 0:
+				return ROOT;
+			case 1:
+				return ADMIN;
+			default:
+				return null;
+			}
+		}
+	}
+	
+	public static class UIDExistsException extends Exception {
+		private static final long serialVersionUID = GrafixPlane.VERSION;
+	}
+	
+	public static class NameExistsException extends Exception {
+		private static final long serialVersionUID = GrafixPlane.VERSION;
 	}
 	
 	/**
@@ -68,7 +103,12 @@ public class User {
 	/**
 	 * User instance can only be created by calling getUser()
 	 */
-	private User() {}
+	private User(int UID,String uname,AccessLevel level,int BoxCount) {
+		this.UID=UID;
+		this.username=uname;
+		this.accessLevel=level;
+		this.boxCount=BoxCount;
+	}
 	
 	/**
 	 * Checks if the incoming request's session is logined
@@ -114,44 +154,34 @@ public class User {
 	 * Gets a user's information and creates the User instance base on its name
 	 * @param uname The user's name
 	 * @return The created instance, or Null if the user is not found or some unexpected error occurred
+	 * @throws SQLException If there are some thing wrong with the database
 	 */
-	public static User getUser(String uname) {
-		try {
-			userByName.setString(1, uname);
-			ResultSet resultSet=userByName.executeQuery();
-			if(!resultSet.first()) return null;
-			
-			User result=new User();
-			result.UID=resultSet.getInt("UID");
-			result.username=uname;
-			result.accessLevel=resultSet.getInt("AccessLevel");
-			return result;
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			return null;
-		}
+	public static User getUser(String uname) throws SQLException {
+		userByName.setString(1, uname);
+		ResultSet resultSet=userByName.executeQuery();
+		if(!resultSet.first()) return null;
+		
+		return new User(resultSet.getInt(1),
+				uname,
+				AccessLevel.valueOf(resultSet.getInt(4)),
+				resultSet.getInt(5));
 	}
 	
 	/**
 	 * Gets a user's information and creates the User instance base on its ID
 	 * @param UID The user's ID
-	 * @return The created instance, or Null if the user is not found or some unexpected error occurred
+	 * @return The created instance, or Null if the user is not found
+	 * @throws SQLException If there are some thing wrong with the database
 	 */
-	public static User getUser(int UID) {
-		try {
-			userByID.setInt(1, UID);
-			ResultSet resultSet=userByID.executeQuery();
-			if(!resultSet.first()) return null;
+	public static User getUser(int UID) throws SQLException {
+		userByID.setInt(1, UID);
+		ResultSet resultSet=userByID.executeQuery();
+		if(!resultSet.first()) return null;
 			
-			User result=new User();
-			result.UID=UID;
-			result.username=resultSet.getString(2);
-			result.accessLevel=resultSet.getInt(4);
-			return result;
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			return null;
-		}
+		return new User(UID,
+				resultSet.getString(2),
+				AccessLevel.valueOf(resultSet.getInt(4)),
+				resultSet.getInt(5));
 	}
 	
 	/**
@@ -159,40 +189,75 @@ public class User {
 	 * @param name The new user's name
 	 * @param passwd The new user's password
 	 * @param level The access level that would be assigned to the user
-	 * @return
+	 * @return The newly created user
+	 * @throws SQLException If there are some thing wrong with the database
+	 * @throws NameExistsException if this name already belongs to another user
 	 */
-	public synchronized static User newUser(String name,String passwd,AccessLevel level) {
-		int newID=getGP().getConfig().getInt("userCount")+1;
-		getGP().getConfig().setInt("userCount", newID);
-		
+	public synchronized static User newUser(String name,String passwd,AccessLevel level) throws SQLException, NameExistsException {
+		int newID=getGP().getConfig().getInt("UIDCount")+1;
+		getGP().getConfig().setInt("UIDCount", newID);
 		try {
-			userByName.setString(1,name);
-			if(!userByName.execute()) return null;	//A user with same name already exists
-		} catch(SQLException e) {
+			return newUser(newID, name, passwd, level);
+		} catch (UIDExistsException e) {
+			//NOT POSSIBLE
 			e.printStackTrace();
-			return null;	//Unknowing whether a user with the same name already exists, interpreting as yes
-		}
-
-		return overrideUser(newID, name, passwd, level);
-	}
-	
-	public synchronized static User overrideUser(int UID,String name,String passwd,AccessLevel level) {
-		try {
-			modifyUser.setInt(1,UID);
-			modifyUser.setString(2,name);
-			modifyUser.setString(3,passwd);
-			modifyUser.setInt(4,level.value);
-			modifyUser.execute();
-		} catch (SQLException e) {
-			e.printStackTrace();
+			GrafixPlane.stop();
 			return null;
 		}
+	}
+	
+	/**
+	 * Add a new user into GrafixPlane with specified UID
+	 * @param UID The specified UID
+	 * @param name The new user's name
+	 * @param passwd The new user's password
+	 * @param level The access level that would be assigned to the user
+	 * @return The newly created user, never null
+	 * @throws SQLException If there are some thing wrong with the database
+	 * @throws NameExistsException if this name already belongs to another user
+	 * @throws UIDExistsException if this UID already belongs to another user
+	 */
+	public synchronized static User newUser(int UID,String name,String passwd,AccessLevel level) throws SQLException, NameExistsException, UIDExistsException {
+		userByName.setString(1,name);
+		if(userByName.executeQuery().first()) throw new NameExistsException();	//A user with same name already exists
+		userByID.setInt(1, UID);
+		if(userByID.executeQuery().first()) throw new UIDExistsException();	//A user with same UID already exists
 		
-		User result=new User();
-		result.UID=UID;
-		result.accessLevel=level.value;
-		result.username=name;
-		return result;
+		newUser.setInt(1,UID);
+		newUser.setString(2, name);
+		newUser.setString(3, passwd);
+		newUser.setInt(4, level.value);
+		newUser.setInt(5, 0);
+		
+		newUser.execute();
+		
+		return new User(UID,name,level,0);
+	}
+	
+	/**
+	 * Overwrite an <strong>existing</strong> user data with some new data
+	 * @param UID The ID of the user that is being updating
+	 * @param name The new name for this user, or <em>null</em> to leave it unchanged 
+	 * @param passwd the new password for this user, or <em>null</em> to leave it unchanged 
+	 * @param level The new access level for this user, or <em>null</em> to leave it unchanged 
+	 * @return <em>True</em> if everything was fine, or <em>False</em> if that UID doesn't point to any user, 
+	 * @throws NameExistsException If this name already belongs to another user,
+	 * @throws SQLException  If there are some thing wrong with the database
+	 */
+	public synchronized static boolean overrideUser(int UID,String name,String passwd,AccessLevel level) throws NameExistsException, SQLException {
+		userByName.setString(1,name);
+		if(userByName.executeQuery().first()) throw new NameExistsException();	//A user with same name already exists
+		
+		String sql="UPDATE USER SET ";
+		if(name!=null) sql+=String.format("Username = '%s', ", name);
+		if(passwd!=null) sql+=String.format("Passwd = '%s', ", passwd);
+		if(level!=null) sql+=String.format("AccessLevel = %d, ", level.value);
+		sql=sql.substring(0, sql.length()-2)+String.format(" WHERE UID = %d", UID);
+		getGP().getLogger().info(sql);
+		
+		if(getGP().getConn().createStatement().executeUpdate(sql)!=1) return false;
+		//TODO: invalidate all sessions that is login as this user
+		return true;
 	}
 	
 	/**
@@ -201,22 +266,16 @@ public class User {
 	 * @param passwd The new password
 	 * @return <em>true</em> if the password is updated, or <em>false</em> if the user dosen't exist 
 	 * or there are something wrong with the SQL query
+	 * @throws SQLException 
+	 * @throws NameExistsException 
 	 */
-	public synchronized static boolean modifyPasswd(int UID,String passwd) {
-		try {
-			modifyPasswd.setInt(2,UID);
-			modifyPasswd.setString(1,passwd);
-			return modifyPasswd.executeUpdate()==1;
-		} catch(SQLException e) {
-			e.printStackTrace();
-			return false;
-		}
+	public synchronized static boolean modifyPasswd(int UID,String passwd) throws NameExistsException, SQLException {
+		return overrideUser(UID, null, passwd, null);
 	}
 	
 	public static void init(Connection conn) throws SQLException {
-		userByID=conn.prepareStatement("SELECT * FROM USER WHERE(UID=?)");
-		userByName=conn.prepareStatement("SELECT * FROM USER WHERE(Username=?)");
-		modifyUser=conn.prepareStatement("INSERT INTO USER VALUES (?,?,?,?)");
-		modifyPasswd=conn.prepareStatement("UPDATE USER SET Passwd = ? WHERE UID = ?");
+		userByID=conn.prepareStatement("SELECT * FROM USER WHERE UID = ?");
+		userByName=conn.prepareStatement("SELECT * FROM USER WHERE Username = ?");
+		newUser=conn.prepareStatement("INSERT INTO USER VALUES (?,?,?,?,?)");
 	}
 }
