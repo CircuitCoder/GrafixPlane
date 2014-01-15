@@ -313,7 +313,8 @@ public class GrafixPlane {
 		consoleAppender.addFilter(new AbstractMatcherFilter<ILoggingEvent>() {
 			@Override
 			public FilterReply decide(ILoggingEvent event) {
-				if(event.getLevel().isGreaterOrEqual(Level.INFO))
+				if(event.getLevel().isGreaterOrEqual(Level.INFO)
+						&&event.getLoggerName().equals(GrafixPlane.this.logger.getName()))
 					return FilterReply.ACCEPT;
 				else return FilterReply.DENY;
 			}

@@ -253,7 +253,6 @@ public class User {
 		if(passwd!=null) sql+=String.format("Passwd = '%s', ", passwd);
 		if(level!=null) sql+=String.format("AccessLevel = %d, ", level.value);
 		sql=sql.substring(0, sql.length()-2)+String.format(" WHERE UID = %d", UID);
-		getGP().getLogger().info(sql);
 		
 		if(getGP().getConn().createStatement().executeUpdate(sql)!=1) return false;
 		//TODO: invalidate all sessions that is login as this user
