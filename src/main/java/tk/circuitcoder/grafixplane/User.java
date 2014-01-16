@@ -9,6 +9,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.servlet.http.HttpSession;
+import javax.servlet.http.HttpSessionEvent;
+import javax.servlet.http.HttpSessionListener;
 
 import static tk.circuitcoder.grafixplane.GrafixPlane.*;
 
@@ -51,6 +53,21 @@ public class User {
 			e.printStackTrace();
 			GrafixPlane.stop();
 			return false;
+		}
+	}
+	
+	/**
+	 * Removes the session from its user's sessionList when it is about to invalidate automatically
+	 * @author CircuitCoder
+	 */
+	public static class SessionTimeoutListener implements HttpSessionListener {
+		@Override
+		public void sessionCreated(HttpSessionEvent se) {}
+		@Override
+		public void sessionDestroyed(HttpSessionEvent se) {
+			if(se.getSource() instanceof User) return;
+			User u=(User) se.getSession().getAttribute("g_user");
+			if(u!=null) u.sessions.remove(se.getSession());
 		}
 	}
 	
