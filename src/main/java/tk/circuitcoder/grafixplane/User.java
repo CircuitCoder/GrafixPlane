@@ -56,8 +56,8 @@ public class User {
 	
 	public static enum AccessLevel {
 		ROOT(0,"Root User"),ADMIN(1,"Administrator");
-		int value; //The value stored in the database, representing this level
-		String display; //The string displayed in the account information page
+		public final int value; //The value stored in the database, representing this level
+		public final String display; //The string displayed in the account information page
 		
 		private AccessLevel(int v,String ds) {
 			value=v;
@@ -70,14 +70,8 @@ public class User {
 		 * @return The AccessLevel object, or <em>null</em> if their are no level matches this value
 		 */
 		public static AccessLevel valueOf(int level) {
-			switch (level) {
-			case 0:
-				return ROOT;
-			case 1:
-				return ADMIN;
-			default:
-				return null;
-			}
+			for(AccessLevel al:AccessLevel.values()) if(al.value==level) return al;
+			return null;
 		}
 	}
 	

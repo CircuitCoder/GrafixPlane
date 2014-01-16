@@ -17,27 +17,31 @@ public class H2DatabaseManager extends DatabaseManager {
 	
 	Server database;
 	int port;
-
-	@Override
-	public void startDB(int port) throws SQLException {
-		GrafixPlane.getGP().getLogger().info("Starting DB...");
+	
+	public void startDB(int port,boolean verbose,boolean debug) throws SQLException {	//For testing
+		if(verbose) GrafixPlane.getGP().getLogger().info("Starting DB...");
 		
 		this.port=port;
 		if(database==null) {
-			GrafixPlane.getGP().getLogger().info("Creating DB instance...");
+			if(verbose) GrafixPlane.getGP().getLogger().info("Creating DB instance...");
 			//Add an option to modify the ports;
-			if(GrafixPlane.getGP().isDebug())  //Allow Other debug software to interact with DB
+			if(debug)  //Allow Other debug software to interact with DB
 				database=Server.createTcpServer(new String[] {"-tcpAllowOthers"});
 			else
 				database=Server.createTcpServer();
 		}
 		
 		if(database.isRunning(true)) {
-			GrafixPlane.getGP().getLogger().info("DB already running");
+			if(verbose) GrafixPlane.getGP().getLogger().info("DB already running");
 			return;
 		}
 		database.start();
-		GrafixPlane.getGP().getLogger().info("DB started");
+		if(verbose) GrafixPlane.getGP().getLogger().info("DB started");
+	}
+
+	@Override
+	public void startDB(int port) throws SQLException {
+		startDB(port,true,GrafixPlane.getGP().isDebug());
 	}
 
 	@Override

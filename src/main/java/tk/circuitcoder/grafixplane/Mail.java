@@ -15,16 +15,18 @@ import java.util.Set;
  */
 public class Mail {
 	public int MID;
-	public int sender;
-	public int receiver;
+	public User sender;
+	public Set<User> receivers;
 	public String content;
 	public Timestamp sentTime;
 	public String attachments;
-	//TODO: Group & visited
+	public int replyTo;
 	
 	private static PreparedStatement mailByID;
 
-	private Mail() {}
+	private Mail() {
+		receivers=new HashSet<User>();
+	}
 	
 	public static Set<Mail> getMailByReceiver(int UID) {
 		return null;
@@ -41,7 +43,8 @@ public class Mail {
 	public static Mail getMail(int MID) {
 		try {
 			mailByID.setInt(1, MID);
-			ResultSet result=mailByID.executeQuery();	
+			ResultSet result=mailByID.executeQuery();
+			if(!result.first()) return null;
 			return getMail(result);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -50,13 +53,17 @@ public class Mail {
 	}
 	
 	private static Mail getMail(ResultSet resultSet) throws SQLException {
-		if(resultSet.isAfterLast()) return null;
 		Mail mail=new Mail();
 		mail.MID=resultSet.getInt(1);
-		mail.sender=resultSet.getInt(2);
-		mail.receiver=resultSet.getInt(3);
+		mail.sender=User.getUser(resultSet.getInt(2));
+		
+		String receivers[]=resultSet.getString(3).split("\\|");
+		for(int i=0;i<receivers.length;i++)
+			mail.receivers.add(User.getUser(Integer.parseInt(receivers[i])));
+		
 		mail.content=resultSet.getString(4);
 		mail.attachments=resultSet.getString(5);
+		mail.replyTo=resultSet.getInt(6);
 		
 		return mail;
 	}
