@@ -32,6 +32,7 @@ public class User {
 	private static PreparedStatement newUser;
 	
 	private static HashMap<Integer,User> userPool;
+	private static int sessionCount=0;
 	//TODO: clear user with no session logged in when ran out of memory
 	
 	public int getUID() {
@@ -57,17 +58,22 @@ public class User {
 	}
 	
 	/**
-	 * Removes the session from its user's sessionList when it is about to invalidate automatically
+	 * Removes the session from its user's sessionList when it is about to invalidate automatically<br/>
+	 * Also used for counting the connection number
 	 * @author CircuitCoder
 	 */
-	public static class SessionTimeoutListener implements HttpSessionListener {
+	public static class SessionListener implements HttpSessionListener {
 		@Override
-		public void sessionCreated(HttpSessionEvent se) {}
+		public void sessionCreated(HttpSessionEvent se) {
+		}
 		@Override
 		public void sessionDestroyed(HttpSessionEvent se) {
 			if(se.getSource() instanceof User) return;
 			User u=(User) se.getSession().getAttribute("g_user");
-			if(u!=null) u.sessions.remove(se.getSession());
+			if(u!=null) {
+				u.sessions.remove(se.getSession());
+				--sessionCount;
+			}
 		}
 	}
 	
@@ -123,6 +129,7 @@ public class User {
 	 */
 	public boolean loginSession(HttpSession session) {
 		if(session.getAttribute("g_user")!=null) return false;
+		++sessionCount;
 		session.setAttribute("g_user", this);
 		return sessions.add(session);
 	}
@@ -134,6 +141,7 @@ public class User {
 	 */
 	public boolean logoutSession(HttpSession session) {
 		if(!sessions.remove(session)) return false;
+		--sessionCount;
 		session.invalidate();
 		return true;
 	}
@@ -316,6 +324,14 @@ public class User {
 	 */
 	public synchronized static boolean modifyPasswd(int UID,String passwd) throws NameExistsException, SQLException {
 		return overrideUser(UID, null, passwd, null);
+	}
+	
+	/**
+	 * Get the session count
+	 * @return How much active session are there in this GrafixPlane instance
+	 */
+	public static int getSessionCount() {
+		return sessionCount;
 	}
 	
 	public static void init(Connection conn) throws SQLException {

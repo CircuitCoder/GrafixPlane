@@ -24,4 +24,9 @@
 		<servlet-name>HomeServlet</servlet-name>
 		<url-pattern>/home</url-pattern>
 	</servlet-mapping>
+	
+	<listener>
+		<listener-class>tk.circuitcoder.grafixplane.User.SessionListener</listener-class>
+	</listener>
+	
 </web-app>
