@@ -393,8 +393,8 @@ public class GrafixPlane {
 			Statement stat=conn.createStatement();
 			stat.execute("CREATE TABLE MAILBOX ("
 					+ "UID int(10) UNSIGNED,"	//The UID of its owner
-					+ "BoxIndex smallint,"	//The index of this Box
 					+ "Mails varchar,"	//Mails, Syntax: ......||MID@Box'Type,status||......
+					+ "BoxCount smallint,"	//The index of this Box
 					+ "MailCount smallint,"	//How many mails are there in this box
 					+ ");");
 
@@ -409,6 +409,7 @@ public class GrafixPlane {
 		try {
 			Mail.init(conn);
 			User.init(conn);
+			Mailbox.init(conn);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;

@@ -38,6 +38,12 @@ public class MailTest {
 				+ "Attachment varchar,"
 				+ "ReplyTo int(10) UNSIGNED"
 				+ ");");
+		stat.execute("CREATE TABLE MAILBOX ("
+				+ "UID int(10) UNSIGNED,"
+				+ "Mails varchar,"
+				+ "BoxCount smallint,"
+				+ "MailCount smallint,"
+				+ ");");
 		
 		conn.prepareStatement("INSERT INTO MAIL VALUES (1234,1,'2|3','Nothing','1',0)").execute();
 		Mail.init(conn);
@@ -57,7 +63,6 @@ public class MailTest {
 		assertEquals(User.getUser(1),mail.sender);
 		assertEquals("Nothing", mail.content);
 		assertEquals(0, mail.replyTo);
-		
 	}
 
 	@Test
@@ -71,5 +76,11 @@ public class MailTest {
 		assertEquals('F', mail.getType());
 		assertEquals(4, mail.getTData());
 		assertEquals(mail.getMail().MID, 1234);
+	}
+
+	@Test
+	public void genMailStrTest() {
+		WrappedMail mail=Mailbox.parseMail("1234,UF'F4@3|");
+		assertEquals("1234,UF'F4@3|",Mailbox.genMailStr(mail));
 	}
 }

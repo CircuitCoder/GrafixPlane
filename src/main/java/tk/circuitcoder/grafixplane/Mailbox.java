@@ -1,5 +1,9 @@
 package tk.circuitcoder.grafixplane;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 
 /**
@@ -7,7 +11,7 @@ import java.util.ArrayList;
  * A mailbox, stores a series of mail belonging to the same user in a string in the database<br/>
  * DB columns & data:
  * <table>
- * 	<thead><th>UID</th><th>Mails</th><th>BoxCounter</th><th>MailCount</th></thead>
+ * 	<thead><th>UID</th><th>Mails</th><th>BoxCount</th><th>MailCount</th></thead>
  *  <tbody><tr>
  *  	<td>The UID of this box's owner</td>
  *  	<td>The mail storage string</td>
@@ -60,14 +64,91 @@ public class Mailbox {
 		//TODO: Box class
 	}
 	
-	private ArrayList<WrappedMail> seq;
+	private static PreparedStatement getBox;
+	private static PreparedStatement saveBox;
+	private static PreparedStatement newBox;
 	
-	private Mailbox() {
+	private boolean isNew;
+	private ArrayList<WrappedMail> seq;
+	private final int UID;
+	private int mailCount;
+	private final int boxCount;
+	
+	private Mailbox(int UID,int index) {
+		this(false,UID,index);
+	}
+	
+	private Mailbox(boolean isNew,int UID,int index) {
+		this.UID=UID;
+		this.isNew=isNew;
+		if(isNew) mailCount=0;
+		this.boxCount=index;
 		seq=new ArrayList<WrappedMail>();
 	}
 	
-	private void addMail(String mailString) {
+	public void save() throws SQLException {
+		if(isNew) {
+			newBox.setInt(1,UID);
+			newBox.setString(2, this.toString());
+			newBox.setInt(3,boxCount);
+			newBox.setInt(4,mailCount);
+			newBox.executeUpdate();
+			isNew=false;
+		}
+		else {
+			saveBox.setString(1,this.toString());
+			saveBox.setInt(2,mailCount);
+			saveBox.setInt(3,UID);
+			saveBox.setInt(4,boxCount);
+			saveBox.executeUpdate();
+		}
+	}
+	
+	@Override
+	public void finalize() {
+		try {
+			save();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			//TODO: handle this
+		}
+	}
+	
+	private void readMail(String mailString) {
 		seq.add(parseMail(mailString));
+	}
+	
+	/**
+	 * Add a new mail into this mailbox
+	 * @param mail The mail to be added
+	 * @return The mail count of this mailbox
+	 */
+	public int addMail(WrappedMail mail) {
+		seq.add(mail);
+		return ++mailCount;
+	}
+	
+	public WrappedMail getMail(int index) {
+		return seq.get(index);
+	}
+	
+	@Override
+	public String toString() {
+		String str="";
+		for(int i=0;i<mailCount;i++) str+=genMailStr(seq.get(i));
+		return str;
+	}
+
+	public static String genMailStr(WrappedMail wmail) {
+		String str="";
+		str+=String.valueOf(wmail.mail.MID)+',';
+		if(wmail.unread) str+='U';
+		if(wmail.deleted) str+='D';
+		if(wmail.flagged) str+='F';
+		str+="\'"+wmail.typeC;
+		if(wmail.typeD!=Integer.MIN_VALUE) str+=String.valueOf(wmail.typeD);
+		str+="@"+wmail.box+'|';
+		return str;
 	}
 	
 	public static WrappedMail parseMail(String mailString) {
@@ -92,11 +173,26 @@ public class Mailbox {
 		return mail;
 	}
 	
-	public static Mailbox parseBox(String mails) {
+	public static Mailbox parseBox(int UID,int index,String mails,int mailCount) {
 		String mailstrs[]=mails.split("|");
-		Mailbox result=new Mailbox();
-		for(int i=0;i<mailstrs.length-1;i++) 
-			result.addMail(mailstrs[i]);
+		Mailbox result=new Mailbox(UID,index);
+		result.mailCount=mailCount;
+		for(int i=0;i<mailCount;i++) 
+			result.readMail(mailstrs[i]);
 		return result;
+	}
+	
+	public static Mailbox getBox(int uid,int index) throws SQLException {
+		getBox.setInt(1, uid);
+		getBox.setInt(2, index);
+		ResultSet resultSet=getBox.executeQuery();
+		Mailbox result=parseBox(uid,index,resultSet.getString(2), resultSet.getInt(4));
+		return result;
+	}
+	
+	public static void init(Connection conn) throws SQLException {
+		getBox=conn.prepareStatement("SELECT * FROM MAILBOX WHERE UID = ? AND BoxCount = ?");
+		saveBox=conn.prepareStatement("UPDATE MAILBOX SET Mails = ?, MailCount = ? WHERE UID = ? AND BoxCount = ?");
+		newBox=conn.prepareStatement("INSERT INTO MAILBOX VALUES (?,?,?,?)");
 	}
 }
