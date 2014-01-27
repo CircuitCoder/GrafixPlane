@@ -39,8 +39,8 @@ import tk.circuitcoder.grafixplane.filter.ControlFilter;
  * @since 0.0.1
  */
 public class GrafixPlane {
-	static final public String VERSION_TEXT="GrafixPlane 0.0.2 SNAPSHOT";
-	static final public long VERSION=2L;
+	static final public String VERSION_TEXT="GrafixPlane 0.0.3 SNAPSHOT";
+	static final public long VERSION=3L;
 	static private GrafixPlane instance;
 	
 	private Server webserver;

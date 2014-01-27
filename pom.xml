@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>tk.circuitcoder</groupId>
 	<artifactId>GrafixPlane</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.3-SNAPSHOT</version>
 
 	<properties>
 		<JETTY_VER>9.1.0.RC2</JETTY_VER>
