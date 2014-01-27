@@ -25,6 +25,15 @@
 		<url-pattern>/home</url-pattern>
 	</servlet-mapping>
 	
+	<servlet>
+		<servlet-name>MailServlet</servlet-name>
+		<servlet-class>tk.circuitcoder.grafixplane.servlet.MailServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>MailServlet</servlet-name>
+		<url-pattern>/mail</url-pattern>
+	</servlet-mapping>
+	
 	<listener>
 		<listener-class>tk.circuitcoder.grafixplane.User.SessionListener</listener-class>
 	</listener>

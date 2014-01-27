@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Set;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -34,6 +35,7 @@ public class MailTest {
 				+ "MID int(10) UNSIGNED,"
 				+ "Sender int(10) UNSIGNED,"
 				+ "Receiver varchar,"
+				+ "Subject varchar,"
 				+ "Content varchar,"
 				+ "Attachment varchar,"
 				+ "ReplyTo int(10) UNSIGNED"
@@ -45,7 +47,9 @@ public class MailTest {
 				+ "MailCount smallint,"
 				+ ");");
 		
-		conn.prepareStatement("INSERT INTO MAIL VALUES (1234,1,'2|3','Nothing','1',0)").execute();
+		conn.prepareStatement("INSERT INTO MAIL VALUES (1234,1,'2|3|','A','Nothing','1|',0)").execute();
+		conn.prepareStatement("INSERT INTO MAIL VALUES (5678,1,'2|4|','B','Anything','2|',0)").execute();
+		conn.prepareStatement("INSERT INTO MAIL VALUES (1111,2,'1','C','Anything','2|',1234)").execute();
 		Mail.init(conn);
 		User.init(conn);
 		User.newUser(1, "Hi", "1", AccessLevel.ADMIN);
@@ -58,16 +62,17 @@ public class MailTest {
 	public void getMailTest() throws SQLException {
 		Mail mail=Mail.getMail(1234);
 		assertNotNull(mail);
-		assertTrue(mail.receivers.contains(User.getUser(2)));
-		assertTrue(mail.receivers.contains(User.getUser(3)));
-		assertEquals(User.getUser(1),mail.sender);
+		assertEquals("A",mail.subject);
+		assertTrue(mail.receivers.contains(2));
+		assertTrue(mail.receivers.contains(3));
+		assertEquals(1,mail.sender);
 		assertEquals("Nothing", mail.content);
 		assertEquals(0, mail.replyTo);
 	}
 
 	@Test
 	public void parseMailTest() {
-		WrappedMail mail=Mailbox.parseMail("1234,UF'F4@3|");
+		WrappedMail mail=Mailbox.parseMail("1234,UF'F4@3");
 		assertNotNull(mail);
 		assertTrue(mail.unread());
 		assertTrue(mail.flagged());
@@ -80,7 +85,15 @@ public class MailTest {
 
 	@Test
 	public void genMailStrTest() {
-		WrappedMail mail=Mailbox.parseMail("1234,UF'F4@3|");
-		assertEquals("1234,UF'F4@3|",Mailbox.genMailStr(mail));
+		WrappedMail mail=Mailbox.parseMail("1234,UF'F4@3");
+		assertEquals("1234,UF'F4@3|",mail.toString());
+	}
+	
+	@Test
+	public void senderTest() throws SQLException {
+		Set<Mail> mails=Mail.getMailBySender(1);
+		assertEquals(2, mails.size());
+		assertTrue(mails.contains(Mail.getMail(1234)));
+		assertTrue(mails.contains(Mail.getMail(5678)));
 	}
 }

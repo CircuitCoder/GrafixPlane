@@ -34,6 +34,7 @@ import java.util.ArrayList;
  */
 public class Mailbox {
 	public static class WrappedMail {
+		private int MID;
 		private Mail mail;
 		private char typeC;
 		private int typeD;
@@ -43,7 +44,8 @@ public class Mailbox {
 		private int box;
 		
 		private WrappedMail(int MID,char tc,int td,boolean u,boolean d,boolean f,int b) {
-			mail=Mail.getMail(MID);
+			this.MID=MID;
+			mail=null;
 			typeC=tc;
 			typeD=td;
 			unread=u;
@@ -54,7 +56,10 @@ public class Mailbox {
 		
 		private WrappedMail() {}
 		
-		public Mail getMail() {return mail;}
+		public Mail getMail() {
+			if(mail!=null) return mail;
+			else return (mail=Mail.getMail(MID));
+		}
 		public char getType() {return typeC;}
 		public int getTData() {return typeD;}
 		public boolean unread() {return unread;}
@@ -62,6 +67,26 @@ public class Mailbox {
 		public boolean flagged() {return flagged;}
 		public int getBox() {return box;}
 		//TODO: Box class
+		
+		/**
+		 * Set field <tt>unread</tt> to false
+		 */
+		public void read() {
+			unread=false;
+		}
+		
+		@Override
+		public String toString() {
+			String str="";
+			str+=String.valueOf(MID)+',';
+			if(unread) str+='U';
+			if(deleted) str+='D';
+			if(flagged) str+='F';
+			str+="\'"+typeC;
+			if(typeD!=Integer.MIN_VALUE) str+=String.valueOf(typeD);
+			str+="@"+box+'|';
+			return str;
+		}
 	}
 	
 	private static PreparedStatement getBox;
@@ -74,8 +99,14 @@ public class Mailbox {
 	private int mailCount;
 	private final int boxCount;
 	
-	private Mailbox(int UID,int index) {
-		this(false,UID,index);
+	/**
+	 * Create a new mailbox<br/>
+	 * force isNew property equals true
+	 * @param UID UID of the box's owner
+	 * @param index The box's index
+	 */
+	public Mailbox(int UID,int index) {
+		this(true,UID,index);
 	}
 	
 	private Mailbox(boolean isNew,int UID,int index) {
@@ -84,6 +115,14 @@ public class Mailbox {
 		if(isNew) mailCount=0;
 		this.boxCount=index;
 		seq=new ArrayList<WrappedMail>();
+	}
+	
+	/**
+	 * Get the size of this box
+	 * @return The number of mails this box contains
+	 */
+	public int size() {
+		return mailCount;
 	}
 	
 	public void save() throws SQLException {
@@ -104,14 +143,17 @@ public class Mailbox {
 		}
 	}
 	
-	@Override
-	public void finalize() {
-		try {
-			save();
-		} catch (SQLException e) {
-			e.printStackTrace();
-			//TODO: handle this
-		}
+	/**
+	 * Insert a new mail into this mailbox<br/>
+	 * Called when a new mail is sent to the owner of this box
+	 * @param imail The mail to be inserted into this box
+	 * @return The number of mails in this box after invoking this method
+	 */
+	public int insert(Mail mail,char typeC,int typeD) {
+		WrappedMail wmail=new WrappedMail(mail.MID, typeC, typeD, true, false, false, 0);
+		wmail.mail=mail;
+		seq.add(wmail);
+		return ++mailCount;
 	}
 	
 	private void readMail(String mailString) {
@@ -121,7 +163,7 @@ public class Mailbox {
 	/**
 	 * Add a new mail into this mailbox
 	 * @param mail The mail to be added
-	 * @return The mail count of this mailbox
+	 * @return The number of mails in this box after invoking this method
 	 */
 	public int addMail(WrappedMail mail) {
 		seq.add(mail);
@@ -135,26 +177,16 @@ public class Mailbox {
 	@Override
 	public String toString() {
 		String str="";
-		for(int i=0;i<mailCount;i++) str+=genMailStr(seq.get(i));
-		return str;
-	}
-
-	public static String genMailStr(WrappedMail wmail) {
-		String str="";
-		str+=String.valueOf(wmail.mail.MID)+',';
-		if(wmail.unread) str+='U';
-		if(wmail.deleted) str+='D';
-		if(wmail.flagged) str+='F';
-		str+="\'"+wmail.typeC;
-		if(wmail.typeD!=Integer.MIN_VALUE) str+=String.valueOf(wmail.typeD);
-		str+="@"+wmail.box+'|';
+		for(int i=0;i<mailCount;i++) str+=seq.get(i).toString();
 		return str;
 	}
 	
 	public static WrappedMail parseMail(String mailString) {
 		int pointer=mailString.indexOf(',');
 		WrappedMail mail=new WrappedMail();
-		mail.mail=Mail.getMail(Integer.parseInt(mailString.substring(0,	 pointer)));
+//		mail.mail=Mail.getMail(Integer.parseInt(mailString.substring(0,pointer)));
+		mail.mail=null;
+		mail.MID=Integer.parseInt(mailString.substring(0,pointer));	//lazy load
 
 		char s;
 		while((s=mailString.charAt(++pointer))!='\'') {
@@ -162,36 +194,35 @@ public class Mailbox {
 			else if(s=='D') mail.deleted=true;
 			else if(s=='F') mail.flagged=true;
 		}
-		mail.typeC=mailString.charAt(++pointer);
-		try {
-			mail.typeD=Integer.parseInt(mailString.substring(pointer+1, (pointer=mailString.indexOf('@'))));
-		} catch(NumberFormatException e) {	//No additional data
-			mail.typeD=Integer.MIN_VALUE;
-		}
-		mail.box=Integer.parseInt(mailString.substring(pointer+1,mailString.length()-1));
+		mail.typeC=mailString.charAt(pointer+1);
+		mail.typeD=Integer.parseInt(mailString.substring(pointer+2, (pointer=mailString.indexOf('@'))));
+		mail.box=Integer.parseInt(mailString.substring(pointer+1,mailString.length()));
 		
 		return mail;
 	}
 	
 	public static Mailbox parseBox(int UID,int index,String mails,int mailCount) {
-		String mailstrs[]=mails.split("|");
-		Mailbox result=new Mailbox(UID,index);
+		String mailstrs[]=mails.split("\\|");
+		Mailbox result=new Mailbox(false,UID,index);
 		result.mailCount=mailCount;
 		for(int i=0;i<mailCount;i++) 
-			result.readMail(mailstrs[i]);
+			result.readMail(mailstrs[i]);	//lazyLoad
 		return result;
 	}
 	
-	public static Mailbox getBox(int uid,int index) throws SQLException {
+	public static ArrayList<Mailbox> getBoxes(int uid,int boxCount) throws SQLException {
 		getBox.setInt(1, uid);
-		getBox.setInt(2, index);
 		ResultSet resultSet=getBox.executeQuery();
-		Mailbox result=parseBox(uid,index,resultSet.getString(2), resultSet.getInt(4));
+		ArrayList<Mailbox> result=new ArrayList<Mailbox>(boxCount);
+		if(!resultSet.first()) return result;
+		do {
+			result.add(parseBox(uid,resultSet.getInt(3),resultSet.getString(2), resultSet.getInt(4)));
+		} while(resultSet.next());
 		return result;
 	}
 	
 	public static void init(Connection conn) throws SQLException {
-		getBox=conn.prepareStatement("SELECT * FROM MAILBOX WHERE UID = ? AND BoxCount = ?");
+		getBox=conn.prepareStatement("SELECT * FROM MAILBOX WHERE UID = ? ORDER BY BoxCount ASC");
 		saveBox=conn.prepareStatement("UPDATE MAILBOX SET Mails = ?, MailCount = ? WHERE UID = ? AND BoxCount = ?");
 		newBox=conn.prepareStatement("INSERT INTO MAILBOX VALUES (?,?,?,?)");
 	}

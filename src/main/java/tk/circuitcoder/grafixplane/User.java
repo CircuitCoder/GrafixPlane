@@ -26,6 +26,7 @@ public class User {
 	private AccessLevel accessLevel;
 	private int boxCount;
 	private HashSet<HttpSession> sessions;
+	private MailManager mails;
 	
 	private static PreparedStatement userByID;
 	private static PreparedStatement userByName;
@@ -44,6 +45,10 @@ public class User {
 	
 	public AccessLevel getAccessLevel() {
 		return accessLevel;
+	}
+	
+	public MailManager getMManager() {
+		return mails;
 	}
 	
 	public boolean modifyPasswd(String passwd) throws SQLException {
@@ -107,18 +112,11 @@ public class User {
 	}
 	
 	/**
-	 * Get all mails received by this User
-	 * @return The mails
-	 */
-	public Set<Mail> getReceivedMail() {
-		return Mail.getMailByReceiver(UID);
-	}
-	
-	/**
 	 * Get all mails sent by this User
-	 * @return The mails
+	 * @return The mails sent by this user
+	 * @throws SQLException If an error occurred when trying to access the database
 	 */
-	public Set<Mail> getSentMail() {
+	public Set<Mail> getSentMail() throws SQLException {
 		return Mail.getMailBySender(UID);
 	}
 	
@@ -147,13 +145,31 @@ public class User {
 	}
 	
 	/**
-	 * User instance can only be created by calling getUser()
+	 * Add a mail into the mailbox, and notify the user after the next refresh 
+	 * @param newMail The mail to be added
 	 */
-	private User(int UID,String uname,AccessLevel level,int BoxCount) {
+	public void recMail(Mail mail) {
+		mails.insert(mail,'P',0);	//personal mail
+	}
+	
+	/**
+	 * Save an user's data and remove it from the cache
+	 * @throws SQLException 
+	 */
+	public void save() throws SQLException {
+		mails.save();
+	}
+	
+	/**
+	 * User instance can only be created by calling getUser()
+	 * @throws SQLEception If failing to read from database
+	 */
+	private User(int UID,String uname,AccessLevel level,int BoxCount) throws SQLException {
 		this.UID=UID;
 		this.username=uname;
 		this.accessLevel=level;
 		this.boxCount=BoxCount;
+		mails=MailManager.getManager(UID, boxCount);
 		this.sessions=new HashSet<HttpSession>();
 	}
 	
@@ -196,17 +212,31 @@ public class User {
 	}
 	
 	/**
-	 * Gets a user's information and creates the User instance base on its name
+	 * Gets a user's information and creates the User instance base on its name<br/>
+	 * If this user isn't cached, it will be loaded from database
 	 * @param uname The user's name
-	 * @return The created instance, or Null if the user is not found or some unexpected error occurred
+	 * @return The created instance, or <tt>Null</tt> if the user isn't found
 	 * @throws SQLException If there are some thing wrong with the database
 	 */
 	public static User getUser(String uname) throws SQLException {
+		return getUser(uname,true);
+	}
+	
+	/**
+	 * Gets the User instance base on its name
+	 * @param uname The user's name
+	 * @param load Whether being allowed to load from database
+	 * @return The created instance, or <tt>Null</tt> if 
+	 * <ul><li>load is <tt>false</tt> and this user isn't cached</li><li>the user isn't found</li></ul>
+	 * @throws SQLException If there are some thing wrong with the database
+	 */
+	public static User getUser(String uname,boolean load) throws SQLException {
 		userByName.setString(1, uname);
 		ResultSet resultSet=userByName.executeQuery();
 		if(!resultSet.first()) return null;
 		int UID=resultSet.getInt(1);
 		if(userPool.containsKey(UID)) return userPool.get(UID);
+		else if(!load) return null;
 		
 		User newUser=new User(resultSet.getInt(1),
 				uname,
@@ -218,13 +248,28 @@ public class User {
 	
 	/**
 	 * Gets a user's information and creates the User instance base on its ID<br/>
-	 * If there this user has been logged in, and still stored in the user pool, just return the exact same user
+	 * If there this user has been logged in, and still stored in the user pool, just return the exact same user<br/>
+	 * If not, it will be loaded from the database
 	 * @param UID The user's ID
-	 * @return The created instance, or Null if the user is not found
+	 * @return The created instance, or <tt>Null</tt> if the user isn't found
 	 * @throws SQLException If there are some thing wrong with the database
 	 */
 	public static User getUser(int UID) throws SQLException {
+		return getUser(UID,true);
+	}
+	
+	/**
+	 * Gets a user's information and creates the User instance base on its ID<br/>
+	 * If there this user has been logged in, and still stored in the user pool, just return the exact same user
+	 * @param UID The user's ID
+	 * @param load Whether being allowed to load from database
+	 * @return The created instance, or <tt>Null</tt> if 
+	 * <ul><li>load is <tt>false</tt> and this user isn't cached</li><li>the user isn't found</li></ul>
+	 * @throws SQLException If there are some thing wrong with the database
+	 */
+	public static User getUser(int UID,boolean load) throws SQLException {
 		if(userPool.containsKey(UID)) return userPool.get(UID);
+		else if(!load) return null;
 		
 		userByID.setInt(1, UID);
 		ResultSet resultSet=userByID.executeQuery();
@@ -339,5 +384,9 @@ public class User {
 		userByName=conn.prepareStatement("SELECT * FROM USER WHERE Username = ?");
 		newUser=conn.prepareStatement("INSERT INTO USER VALUES (?,?,?,?,?)");
 		userPool=new HashMap<Integer,User>();
+	}
+	
+	public static void clear() throws SQLException {
+		for(User u:userPool.values()) u.save();
 	}
 }

@@ -356,7 +356,7 @@ public class GrafixPlane {
 					+ ")");
 			
 			config=new Config();
-			config.init(conn, Arrays.asList("mailCount:0","UIDCount:0")); //Initialize the table
+			config.init(conn, Arrays.asList("mailCount:0","UIDCount:0","BoxCapacity:100")); //Initialize the table
 		}
 		
 		
@@ -380,9 +380,10 @@ public class GrafixPlane {
 			stat.execute("CREATE TABLE MAIL ("
 					+ "MID int(10) UNSIGNED,"
 					+ "Sender int(10) UNSIGNED,"
-					+ "Receiver varchar,"	//Syntax: MID||MID||MID||...MID||
+					+ "Receiver varchar,"	//Syntax: MID|MID|MID|...MID|
+					+ "Subject varchar,"
 					+ "Content varchar,"
-					+ "Attachment varchar,"	//Syntax: FID||FID||FID||...FID||
+					+ "Attachment varchar,"	//Syntax: FID|FID|FID|...FID|
 					+ "ReplyTo int(10) UNSIGNED" //0 for new mail
 					+ ");");
 		}
@@ -410,6 +411,7 @@ public class GrafixPlane {
 			Mail.init(conn);
 			User.init(conn);
 			Mailbox.init(conn);
+			MailManager.init(conn);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
@@ -419,6 +421,8 @@ public class GrafixPlane {
 	
 	private boolean onExit() {
 		try {
+			User.clear();
+			Mail.clear();
 			webserver.stop();
 			config.save(conn);
 			conn.close();
