@@ -30,7 +30,7 @@
 		<div style="text-align:center;">
 			Username: <input id="uname" type="text" class="g_input" style="font-size: 1.25em"/><br/>
 			Password: <input id="passwd" type="password" class="g_input" style="font-size: 1.25em"/><br/>
-			<input name="submit" type="submit" class="g_button main_button" style="font-size: 2em" onclick="login()"/>
+			<input name="submit" type="submit" value="Login" class="g_button main_button" style="font-size: 1.25em" onclick="login()"/>
 		</div>
 	
 		<%

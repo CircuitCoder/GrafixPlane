@@ -17,6 +17,7 @@
     
     box-shadow:none;
     outline: none;
+	border: #AAA 1px solid;
     
     transition: box-shadow 0.5s;
 }
@@ -30,37 +31,39 @@
 }
 
 .g_button {
+	font-size: 1.25em;
+	top: 0px;
 	text-decoration: none;
 	position: relative;
 	
-	color:black;
-	padding: 5px;
+	color:#666;
+	padding: 5px 15px 5px 15px;
 	margin: 5px;
 	
-	border: #888 solid 1px;
+	border: #AAA solid 1px;
 	border-radius: 5px;
 
-	background-color: #BBB;
+	background-color: #F9F9F9;
 	box-shadow: #333 0px 0px 0px;
 	
-	transition: background-color 0.5s,box-shadow 0.5s,top 0.5s;
-	-webkit-transition: background-color 0.5s,box-shadow 0.5s,top 0.5s;
-	-o-transition: background-color 0.5s,box-shadow 0.5s,top 0.5s;
-	-moz-transition: background-color 0.5s,box-shadow 0.5s,top 0.5s;
+	transition: all 0.5s;
+	-webkit-transition: all 0.5s;
+	-o-transition: all 0.5s;
+	-moz-transition: all 0.5s;
 }
 
 .g_button:hover {
-	background-color: #FFF;
-	top: -5px;
-	box-shadow: #333 0px 5px 0px;
+	color:#222;
+	background-color: #DDD;
 }
 
 .g_button.main_button {
-	color: white;
-	font-weight: bold;
-	background-color: #0F4DA8;
+	color: #DDD;
+	background-color: #5AB;
+	border-color: #79D;
 }
 
 .g_button.main_button:hover {
-	background-color: #052F6D;
+	background-color: #28A;
+	color:white;
 }

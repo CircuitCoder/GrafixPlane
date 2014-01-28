@@ -17,3 +17,6 @@
 #Hello Logfiles!
 *.log
 /logs
+
+#Test
+*.db
