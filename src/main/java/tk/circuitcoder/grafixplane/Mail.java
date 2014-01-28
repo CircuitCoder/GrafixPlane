@@ -5,10 +5,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static tk.circuitcoder.grafixplane.GrafixPlane.*;
 
@@ -26,15 +26,25 @@ public class Mail {
 	public Timestamp sentTime;
 	public String attachments;
 	public int replyTo;
+	public int refCount;
 	
 	private static PreparedStatement mailByID;
 	private static PreparedStatement newMail;
+	private static PreparedStatement rmMail;
 	private static PreparedStatement mailBySender;
+	private static PreparedStatement updateRef;
 	
 	private static Map<Integer,Mail> mailPool;
 
 	private Mail() {
 		receivers=new HashSet<Integer>();
+	}
+	
+	public int saveRef() throws SQLException {
+		updateRef.setInt(1,refCount);
+		updateRef.setInt(2,MID);
+		updateRef.execute();
+		return refCount;
 	}
 	
 	public static Set<Mail> getMailBySender(int UID) throws SQLException {
@@ -46,7 +56,7 @@ public class Mail {
 	public static Mail getMail(int MID) {
 		try {
 			if(mailPool.containsKey(MID)) return mailPool.get(MID);
-			
+
 			mailByID.setInt(1, MID);
 			ResultSet result=mailByID.executeQuery();
 			if(!result.first()) return null;
@@ -68,6 +78,18 @@ public class Mail {
 		return newMail(sender.getUID(),rec,subject,content,"",ori.MID).insertAll();
 	}
 	
+	public static boolean remove(int MID) throws SQLException {
+		Mail m=getMail(MID);
+		if(m.refCount!=0) return false;
+		mailPool.remove(MID);
+		rmMail.setInt(1,MID);
+		return (rmMail.executeUpdate()==1);
+	}
+	
+	public static boolean isCached(int MID) {
+		return mailPool.containsKey(MID);
+	}
+	
 	private static synchronized Mail newMail(int sender,Set<Integer> receivers,String subject,String content,String attachments,int replyTo) throws SQLException {
 		int mid=getGP().getConfig().getInt("mailCount")+1;
 		getGP().getConfig().setInt("mailCount", mid);
@@ -81,6 +103,7 @@ public class Mail {
 		newMail.setString(5,content);
 		newMail.setString(6, attachments);
 		newMail.setInt(7, replyTo);
+		newMail.setInt(8,receivers.size());	//Receivers' INBOXes
 		
 		int updateCount=newMail.executeUpdate();
 		if(updateCount!=1) return null;	//Not sent
@@ -93,6 +116,7 @@ public class Mail {
 		result.content=content;
 		result.attachments=attachments;
 		result.replyTo=replyTo;
+		result.refCount=receivers.size();
 		
 		mailPool.put(mid,result);
 		return result;
@@ -119,6 +143,7 @@ public class Mail {
 		mail.content=resultSet.getString(5);
 		mail.attachments=resultSet.getString(6);
 		mail.replyTo=resultSet.getInt(7);
+		mail.refCount=resultSet.getInt(8);
 		
 		return mail;
 	}
@@ -141,11 +166,14 @@ public class Mail {
 	
 	public static void init(Connection conn) throws SQLException {
 		mailByID=conn.prepareStatement("SELECT * FROM MAIL WHERE(MID=?)");
-		newMail=conn.prepareStatement("INSERT INTO MAIL VALUES(?,?,?,?,?,?,?)");
+		newMail=conn.prepareStatement("INSERT INTO MAIL VALUES(?,?,?,?,?,?,?,?)");
+		rmMail=conn.prepareStatement("DELETE FROM MAIL WHERE MID = ?");
 		mailBySender=conn.prepareStatement("SELECT * FROM MAIL WHERE(Sender = ?)");
-		mailPool=new HashMap<Integer,Mail>();
+		updateRef=conn.prepareStatement("UPDATE MAIL SET RefCount = ? WHERE MID = ?");
+		mailPool=new ConcurrentHashMap<Integer,Mail>();
 	}
 	
-	public static void clear() {
+	public static void clear() throws SQLException {
+		for(Mail m:mailPool.values()) m.saveRef();
 	}
 }

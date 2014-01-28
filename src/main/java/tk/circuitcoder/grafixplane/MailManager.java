@@ -5,7 +5,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.ListIterator;
-
 import tk.circuitcoder.grafixplane.Mailbox.WrappedMail;
 import static tk.circuitcoder.grafixplane.GrafixPlane.*;
 
@@ -41,10 +40,9 @@ public class MailManager {
 			result.boxes=new ArrayList<Mailbox>();
 			result.boxes.add(new Mailbox(owner,1));
 			result.boxCount=1;
-			result.size=0;
 		} else {
 			result.boxCount=boxCount;
-			result.boxes=Mailbox.getBoxes(owner, boxCount);
+			result.boxes=(ArrayList<Mailbox>) Mailbox.getBoxes(owner, boxCount);
 			for(Mailbox box:result.boxes) result.size+=box.size();
 		}
 		return result;
@@ -59,16 +57,51 @@ public class MailManager {
 	}
 	
 	public void insert(Mail mail,char typeC,int typeD) {
-		if(boxes.get(boxCount-1).insert(mail,typeC,typeD)==capacity)	//Time to create a new box
-			boxes.add(new Mailbox(UID,++boxCount));
+		synchronized (boxes) {
+			if(boxes.get(boxCount-1).insert(mail,typeC,typeD)==capacity)	//Time to create a new box
+				boxes.add(new Mailbox(UID,++boxCount));
+		}
 		++size;
+	}
+	
+	public boolean delete(int index) {
+		int mailC=0;
+		synchronized (boxes) {
+			for(int i=0;i<boxCount;i++)
+				if((mailC+=boxes.get(i).size())>=index)
+				{
+					boxes.get(i).delete(index-mailC+boxes.get(i).size());
+					return true;
+				}
+		}
+		return false;
+	}
+	
+	public boolean remove(int index) throws SQLException {
+		int mailC=0;
+		synchronized (boxes) {
+			for(int i=0;i<boxCount;i++)
+				if((mailC+=boxes.get(i).size())>=index)
+				{
+					if(boxes.get(i).remove(index-mailC+boxes.get(i).size())==0) {	//No mails in this mailbox
+						for(int j=i+1;j<boxCount;j++) {
+							boxes.get(j).decIndex();
+						}
+						boxes.remove(i);
+					}
+					return true;
+				}
+		}
+		return false;
 	}
 	
 	public WrappedMail getMail(int index) {
 		int mailC=0;
-		for(int i=0;i<boxCount;i++)
-			if((mailC+=boxes.get(i).size())>=index)
-				return boxes.get(i).getMail(index-mailC+boxes.get(i).size());
+		synchronized (boxes) {
+			for(int i=0;i<boxCount;i++)
+				if((mailC+=boxes.get(i).size())>=index)
+					return boxes.get(i).getMail(index-mailC+boxes.get(i).size());
+		}
 		return null;
 	}
 	
@@ -80,41 +113,58 @@ public class MailManager {
 	 * @return
 	 */
 	public ArrayList<WrappedMail> getMails(int begin,int end) {
+		return getMails(begin, end,0,0,0);
+	}
+	
+	/**
+	 * Get all mails with specified status(negative: false,positive: true,zero: dosen't care) in range [begin,end)
+	 * @param begin
+	 * @param end
+	 * @param unread
+	 * @param deleted
+	 * @param flagged
+	 * @return
+	 */
+	public ArrayList<WrappedMail> getMails(int begin,int end,int unread,int deleted,int flagged) {
 		if(begin>end||begin<0||end>size) return null;
 		if(begin==end) return new ArrayList<WrappedMail>();
 		
 		ArrayList<WrappedMail> result=new ArrayList<WrappedMail>();
-		int mailC=0;
-		ListIterator<Mailbox> it=boxes.listIterator();
-		
-		Mailbox current=it.next();
-		while(mailC+current.size()<=begin) {
-			mailC+=current.size();
-			current=it.next();
-		}
-		
-		end-=mailC;
-		int pointer=begin-mailC;
-
-		while(pointer<end) {
-			if(pointer>=current.size()) {
-				pointer-=current.size();
+		synchronized (boxes) {
+			ListIterator<Mailbox> it=boxes.listIterator();
+			
+			Mailbox current=it.next();
+			while(begin-current.size()>=0) {
+				begin-=current.size();
 				end-=current.size();
 				current=it.next();
 			}
-			result.add(current.getMail(pointer++));
+
+			while(begin<end) {
+				if(begin-current.size()>=0) {
+					begin-=current.size();
+					end-=current.size();
+					current=it.next();
+				}
+				WrappedMail mail=current.getMail(begin++);
+				if(!((unread>0&&!mail.unread()||unread<0&&mail.unread())||
+						(deleted>0&&!mail.deleted()||deleted<0&&mail.deleted())||
+						(flagged>0&&!mail.flagged()||flagged<0&&mail.flagged())))
+					result.add(mail);
+			}
 		}
-		
 		return result;
 	}
 	
 	public void save() throws SQLException {
-		for(Mailbox box:boxes)
-			try {
-				box.save();
-			} catch (SQLException e) {
-				getGP().getLogger().error("Error occured when saving mailbox:\n"+e.getLocalizedMessage());
-			}
+		synchronized (boxes) {
+			for(Mailbox box:boxes)
+				try {
+					box.save();
+				} catch (SQLException e) {
+					getGP().getLogger().error("Error occured when saving mailbox:\n"+e.getLocalizedMessage());
+				}
+		}
 		saveBoxCount.setInt(1,boxCount);
 		saveBoxCount.setInt(2,UID);
 		saveBoxCount.execute();

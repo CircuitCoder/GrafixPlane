@@ -4,9 +4,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionEvent;
@@ -31,8 +32,9 @@ public class User {
 	private static PreparedStatement userByID;
 	private static PreparedStatement userByName;
 	private static PreparedStatement newUser;
+	private static PreparedStatement getName;
 	
-	private static HashMap<Integer,User> userPool;
+	private static Map<Integer,User> userPool;
 	private static int sessionCount=0;
 	//TODO: clear user with no session logged in when ran out of memory
 	
@@ -284,6 +286,19 @@ public class User {
 	}
 	
 	/**
+	 * Get the name of a specified user
+	 * @param UID The UID of the requested user
+	 * @return The user's name, or <tt>null</tt> if the user wasn't found
+	 * @throws SQLException If there are some thing wrong with the database
+	 */
+	public static String getName(int UID) throws SQLException {
+		getName.setInt(1,UID);
+		ResultSet resultSet=getName.executeQuery();
+		if(!resultSet.first()) return null;
+		return resultSet.getString(1);
+	}
+	
+	/**
 	 * Add a new user into GrafixPlane
 	 * @param name The new user's name
 	 * @param passwd The new user's password
@@ -383,7 +398,8 @@ public class User {
 		userByID=conn.prepareStatement("SELECT * FROM USER WHERE UID = ?");
 		userByName=conn.prepareStatement("SELECT * FROM USER WHERE Username = ?");
 		newUser=conn.prepareStatement("INSERT INTO USER VALUES (?,?,?,?,?)");
-		userPool=new HashMap<Integer,User>();
+		getName=conn.prepareStatement("SELECT Username FROM USER WHERE UID = ?");
+		userPool=new ConcurrentHashMap<Integer,User>();
 	}
 	
 	public static void clear() throws SQLException {

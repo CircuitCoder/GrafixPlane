@@ -5,8 +5,6 @@ import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
-
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -36,15 +34,18 @@ public class MailServlet extends HttpServlet {
 		
 		PrintWriter w=resp.getWriter();
 		w.write("<!DOCTYPE html><html><head><title>Mailbox</title><script src=\"/js/mail.js\"></script>");
+		w.write("<link rel=\"stylesheet\" href=\"/styles/default.css\" type=\"text/css\">");
 		w.write("<meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\" /></head><body>");
 		
-		Iterator<WrappedMail> it=mailList.iterator();
-		while(it.hasNext()) w.println(it.next().toString()+"<br/>");
+		for(int i=0;i<mailList.size();i++) {
+			WrappedMail m=mailList.get(i);
+			w.println("<div style=\"font-weight:bold;\" id=\"M"+i+"\" class=\"mailRow\" onClick=\"getMail("+i+");\">"+m.toString()+"<br/></div>");
+		}
 		w.println("<hr/>");
-		w.println("Subject: <input type=\"text\" id=\"subject\"/>"
-				+ "Content: <input type=\"text\" id=\"content\"/>"
-				+ "To: <input type=\"text\" id=\"to\"/>"
-				+ "<div onClick=\"sendMail();\">Send</div>");
+		w.println("Subject: <input class=\"g_input\" type=\"text\" id=\"subject\"/>"
+				+ "Content: <input class=\"g_input\" type=\"text\" id=\"content\"/>"
+				+ "To: <input class=\"g_input\" type=\"text\" id=\"to\"/>"
+				+ "<div class=\"g_button\" onClick=\"sendMail();\">Send</div>");
 		
 		w.write("</body></html>");
 		
@@ -64,12 +65,14 @@ public class MailServlet extends HttpServlet {
 		}
 		
 		String action=req.getParameter("action");
-		String recstr[]=req.getParameter("rec").split("\\|");
-		HashSet<Integer> rec=new HashSet<Integer>();
-		for(String s:recstr)
-			rec.add(Integer.valueOf(s));
 		
 		if(action.equals("send")) {
+			//TODO: invalid symbols
+			String recstr[]=req.getParameter("rec").split("\\|");
+			HashSet<Integer> rec=new HashSet<Integer>();
+			for(String s:recstr)
+				rec.add(Integer.valueOf(s));
+			
 			try {
 				Mail result=Mail.send(User.getCurrentUser(req.getSession()),
 						rec,
@@ -81,6 +84,31 @@ public class MailServlet extends HttpServlet {
 			} catch (SQLException e) {
 				e.printStackTrace();
 				resp.getWriter().print(0);
+			}
+		} else if(action.equals("read")) {
+			int index=Integer.parseInt(req.getParameter("index"));
+			Mail m=User.getCurrentUser(req.getSession()).getMManager().getMail(index).getMail();
+			try {
+				resp.getWriter().print(m.subject+","+m.content+","+User.getName(m.sender));
+			} catch (SQLException e) {
+				resp.getWriter().print(",ERROR");
+				e.printStackTrace();
+			}
+		} else if(action.equals("delete")) {
+			int index=Integer.parseInt(req.getParameter("index"));
+			boolean b=User.getCurrentUser(req.getSession()).getMManager().delete(index);
+			if(b) resp.getWriter().print(0);
+			else resp.getWriter().print(1);
+		} else if(action.equals("remove")) {
+			int index=Integer.parseInt(req.getParameter("index"));
+			boolean b;
+			try {
+				b = User.getCurrentUser(req.getSession()).getMManager().remove(index);
+				if(b) resp.getWriter().print(0);
+				else resp.getWriter().print(1);
+			} catch (SQLException e) {
+				resp.getWriter().print(1);
+				e.printStackTrace();
 			}
 		}
 	}

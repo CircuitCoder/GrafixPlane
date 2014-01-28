@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Represent a mailbox used to store mail information<br/>
@@ -56,6 +57,9 @@ public class Mailbox {
 		
 		private WrappedMail() {}
 		
+		public int getMID() {
+			return MID;
+		}
 		public Mail getMail() {
 			if(mail!=null) return mail;
 			else return (mail=Mail.getMail(MID));
@@ -97,7 +101,7 @@ public class Mailbox {
 	private ArrayList<WrappedMail> seq;
 	private final int UID;
 	private int mailCount;
-	private final int boxCount;
+	private int boxCount;
 	
 	/**
 	 * Create a new mailbox<br/>
@@ -156,6 +160,19 @@ public class Mailbox {
 		return ++mailCount;
 	}
 	
+	public int delete(int index) {
+		seq.get(index).deleted=true;
+		return mailCount;
+	}
+	
+	public int remove(int index) throws SQLException {
+		WrappedMail mail=seq.remove(index);
+		if((--mail.mail.refCount)==0) {
+			Mail.remove(mail.MID);
+		}
+		return --mailCount;
+	}
+	
 	private void readMail(String mailString) {
 		seq.add(parseMail(mailString));
 	}
@@ -172,6 +189,10 @@ public class Mailbox {
 	
 	public WrappedMail getMail(int index) {
 		return seq.get(index);
+	}
+	
+	public void decIndex() {
+		--boxCount;
 	}
 	
 	@Override
@@ -210,10 +231,10 @@ public class Mailbox {
 		return result;
 	}
 	
-	public static ArrayList<Mailbox> getBoxes(int uid,int boxCount) throws SQLException {
+	public static List<Mailbox> getBoxes(int uid,int boxCount) throws SQLException {
 		getBox.setInt(1, uid);
 		ResultSet resultSet=getBox.executeQuery();
-		ArrayList<Mailbox> result=new ArrayList<Mailbox>(boxCount);
+		List<Mailbox> result=new ArrayList<Mailbox>(boxCount);
 		if(!resultSet.first()) return result;
 		do {
 			result.add(parseBox(uid,resultSet.getInt(3),resultSet.getString(2), resultSet.getInt(4)));

@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.BeforeClass;
@@ -38,7 +39,8 @@ public class MailTest {
 				+ "Subject varchar,"
 				+ "Content varchar,"
 				+ "Attachment varchar,"
-				+ "ReplyTo int(10) UNSIGNED"
+				+ "ReplyTo int(10) UNSIGNED,"
+				+ "RefCount smallint UNSIGNED"
 				+ ");");
 		stat.execute("CREATE TABLE MAILBOX ("
 				+ "UID int(10) UNSIGNED,"
@@ -47,11 +49,12 @@ public class MailTest {
 				+ "MailCount smallint,"
 				+ ");");
 		
-		conn.prepareStatement("INSERT INTO MAIL VALUES (1234,1,'2|3|','A','Nothing','1|',0)").execute();
-		conn.prepareStatement("INSERT INTO MAIL VALUES (5678,1,'2|4|','B','Anything','2|',0)").execute();
-		conn.prepareStatement("INSERT INTO MAIL VALUES (1111,2,'1','C','Anything','2|',1234)").execute();
+		conn.prepareStatement("INSERT INTO MAIL VALUES (1234,1,'2|3|','A','Nothing','1|',0,1)").execute();
+		conn.prepareStatement("INSERT INTO MAIL VALUES (5678,1,'2|4|','B','Anything','2|',0,2)").execute();
+		conn.prepareStatement("INSERT INTO MAIL VALUES (1111,2,'1','C','Anything','2|',1234,1)").execute();
 		Mail.init(conn);
 		User.init(conn);
+		
 		User.newUser(1, "Hi", "1", AccessLevel.ADMIN);
 		User.newUser(2, "Hello", "2", AccessLevel.ADMIN);
 		User.newUser(3, "Nice", "3", AccessLevel.ADMIN);
