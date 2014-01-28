@@ -22,10 +22,24 @@ function getMail(index) {
 	else {
 		var data=new Array();
 		data=resp.split(",");
-		var html="Send from: "+data[0]+"<br/>Subject: "+data[1]+"<br/>Content: "+data[2]+"<br/><br/>";
-		var div=document.createElement("div");
-		div.style.fontWeight="none";
-		div.innerHTML=html;
-		document.getElementById("M"+index).appendChild(div);
+		return data;
+	}
+}
+
+function titleClick(index) {
+	var parent=document.getElementById("M"+index);
+	var cont=document.getElementById("MC"+index);
+	if(parent.getAttribute("status")=="closed") {
+		if(cont.innerHTML=="") {
+			var data=getMail(index);
+			cont.innerHTML="Send from: "+data[0]+"<br/>Subject: "+data[1]+"<br/>Content: "+data[2]+"<br/><br/>";
+		}
+		//TODO: not animating
+		cont.style.height="auto";
+		parent.setAttribute("status","opened");
+	}
+	else {
+		cont.style.height="0";
+		parent.setAttribute("status","closed")
 	}
 }

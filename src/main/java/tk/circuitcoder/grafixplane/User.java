@@ -32,7 +32,6 @@ public class User {
 	private static PreparedStatement userByID;
 	private static PreparedStatement userByName;
 	private static PreparedStatement newUser;
-	private static PreparedStatement getName;
 	
 	private static Map<Integer,User> userPool;
 	private static int sessionCount=0;
@@ -292,10 +291,7 @@ public class User {
 	 * @throws SQLException If there are some thing wrong with the database
 	 */
 	public static String getName(int UID) throws SQLException {
-		getName.setInt(1,UID);
-		ResultSet resultSet=getName.executeQuery();
-		if(!resultSet.first()) return null;
-		return resultSet.getString(1);
+		return getUser(UID).getUsername();
 	}
 	
 	/**
@@ -398,7 +394,6 @@ public class User {
 		userByID=conn.prepareStatement("SELECT * FROM USER WHERE UID = ?");
 		userByName=conn.prepareStatement("SELECT * FROM USER WHERE Username = ?");
 		newUser=conn.prepareStatement("INSERT INTO USER VALUES (?,?,?,?,?)");
-		getName=conn.prepareStatement("SELECT Username FROM USER WHERE UID = ?");
 		userPool=new ConcurrentHashMap<Integer,User>();
 	}
 	

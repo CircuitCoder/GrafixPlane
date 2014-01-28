@@ -34,6 +34,7 @@ public class AuthServlet extends HttpServlet {
 			GrafixPlane.getGP().getLogger().debug("User login: "+uname+" with "+passwd);
 			
 			if(uname==null||passwd==null) resp.getWriter().write("9"); //Something strange happened
+			else if(User.isLogined(req.getSession())) resp.getWriter().write(2);
 			else if(User.verify(uname, passwd)) {
 				resp.getWriter().write("0"); //login succeed
 				try {

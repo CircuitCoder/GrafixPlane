@@ -2,9 +2,13 @@ package tk.circuitcoder.grafixplane.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.rmi.server.UID;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -21,9 +25,10 @@ public class MailServlet extends HttpServlet {
 	/**
 	 * Returns the page
 	 * @throws IOException 
+	 * @throws ServletException 
 	 */
 	@Override
-	public void doGet(HttpServletRequest req,HttpServletResponse resp) throws IOException {
+	public void doGet(HttpServletRequest req,HttpServletResponse resp) throws IOException, ServletException {
 		if(!User.isLogined(req.getSession())) {
 			resp.sendRedirect("/login.jsp");
 			return;
@@ -32,15 +37,11 @@ public class MailServlet extends HttpServlet {
 		MailManager mails=((User) req.getSession().getAttribute("g_user")).getMManager();
 		ArrayList<WrappedMail> mailList=mails.getMails(0, mails.size());
 		
-		PrintWriter w=resp.getWriter();
-		w.write("<!DOCTYPE html><html><head><title>Mailbox</title><script src=\"/js/mail.js\"></script>");
-		w.write("<link rel=\"stylesheet\" href=\"/styles/default.css\" type=\"text/css\">");
-		w.write("<meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\" /></head><body>");
+		req.setAttribute("blocker", "0");
+		RequestDispatcher reqDis=req.getRequestDispatcher("/mail.jsp");
+		reqDis.include(req, resp);
 		
-		for(int i=0;i<mailList.size();i++) {
-			WrappedMail m=mailList.get(i);
-			w.println("<div style=\"font-weight:bold;\" id=\"M"+i+"\" class=\"mailRow\" onClick=\"getMail("+i+");\">"+m.toString()+"<br/></div>");
-		}
+		PrintWriter w=resp.getWriter();
 		w.println("<hr/>");
 		w.println("Subject: <input class=\"g_input\" type=\"text\" id=\"subject\"/>"
 				+ "Content: <input class=\"g_input\" type=\"text\" id=\"content\"/>"
@@ -89,7 +90,7 @@ public class MailServlet extends HttpServlet {
 			int index=Integer.parseInt(req.getParameter("index"));
 			Mail m=User.getCurrentUser(req.getSession()).getMManager().getMail(index).getMail();
 			try {
-				resp.getWriter().print(m.subject+","+m.content+","+User.getName(m.sender));
+				resp.getWriter().print(User.getName(m.sender)+","+m.subject+","+m.content);
 			} catch (SQLException e) {
 				resp.getWriter().print(",ERROR");
 				e.printStackTrace();

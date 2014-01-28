@@ -5,7 +5,6 @@ import static org.junit.Assert.*;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.BeforeClass;

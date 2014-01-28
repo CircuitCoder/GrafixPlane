@@ -2,20 +2,12 @@
 <%@page import="tk.circuitcoder.grafixplane.User"%>
 <html>
 	<head>
-		<%
-		RequestDispatcher importer=request.getRequestDispatcher("/comp/import.jsp");
-		importer.include(request, response);
-		%>
-		<title>Login</title>
+		<link rel="stylesheet" type="text/css" href="/styles/default.css" />
 		<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+		<title>Login</title>
 		<script type="text/javascript" src="/js/login.js"></script>
 	</head>
 	<body class="g_frame">
-		<%	
-		RequestDispatcher header= request.getRequestDispatcher("/comp/header.jsp"); 
-		header.include(request, response);
-		%>
-		
 		<div id="title" class="g_title">
 		GrafixPlane
 		</div>

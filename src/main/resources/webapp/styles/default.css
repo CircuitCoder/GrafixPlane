@@ -67,3 +67,16 @@
 	background-color: #28A;
 	color:white;
 }
+
+.mailTitle {
+	background: #AAA;
+	font-weight: bold;
+}
+
+.mailCon {
+	overflow: hidden;
+	transition: height 1s;
+	-webkit-transition: height 1s;
+	-moz-transition: height 1s;
+	-o-transition: height 1s;
+}
