@@ -5,7 +5,9 @@
 		<link rel="stylesheet" type="text/css" href="/styles/default.css" />
 		<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 		<title>Login</title>
+		<script type="text/javascript" src="/js/jquery.js"></script>
 		<script type="text/javascript" src="/js/login.js"></script>
+		<script type="text/javascript" src="/js/util.js"></script>
 	</head>
 	<body class="g_frame">
 		<div id="title" class="g_title">
@@ -20,8 +22,8 @@
 		%>
 		
 		<div style="text-align:center;">
-			Username: <input id="uname" type="text" class="g_input" style="font-size: 1.25em"/><br/>
-			Password: <input id="passwd" type="password" class="g_input" style="font-size: 1.25em"/><br/>
+			<input id="uname" type="text" class="g_input empty_input" empty_value="Username" style="font-size: 1.25em"/><br/>
+			<input id="passwd" type="text" class="g_input empty_input" empty_value="Password" style="font-size: 1.25em"/><br/>
 			<input name="submit" type="submit" value="Login" class="g_button main_button" style="font-size: 1.25em" onclick="login()"/>
 		</div>
 	

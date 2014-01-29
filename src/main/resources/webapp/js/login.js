@@ -1,3 +1,18 @@
+$(document).ready(function() {
+	$("#passwd").focusin(function() {
+			$(this).attr("type","password");
+	})
+	$("#passwd").focusout(function() {
+		if($(this).val()=="") $(this).attr("type","text");
+	})
+	
+	$("#uname,#passwd").keydown(function(e) {
+		if(e.which==13) {
+			login();
+		}
+	})
+})
+
 function login() {
 	req = new XMLHttpRequest();
 	req.open("POST", "/auth", false)

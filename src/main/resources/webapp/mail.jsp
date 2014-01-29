@@ -13,14 +13,18 @@
 		<title>Mailbox</title>
 		<script src="/js/jquery.js" type="text/javascript"></script>
 		<script src="/js/mail.js" type="text/javascript"></script>
+		<script src="/js/util.js" type="text/javascript"></script>
 		<style>
 		.mto {
-			margin-left: 50px;
 			margin-bottom: 0;
+			margin-top: 0;
+			width:50em;
+			border-radius:0 5px 0 0;
+			border-bottom:none;
 		}
 		
 		.msubject {
-			border-radius: 5px 5px 0 0;
+			border-radius: 0;
 			display: inline;
 			margin-bottom: 0;
 			font-size:1.5em;
@@ -29,7 +33,7 @@
 		
 		.mcontent {
 			margin-top: 0;
-			border-top-left-radius: 0;
+			border-radius: 0 0 5px 5px;
 			width:50em;
 			height:30em;
 			resize: none;
@@ -51,7 +55,7 @@
 		
 		<div class="mailBody">
 			<br/>
-			<input class="g_input empty_input msubject" empty_value="Subject" type="text"/>
+			<input class="g_input empty_input msubject" empty_value="Subject" type="text"/><br/>
 			<input class="g_input empty_input mto" empty_value="Receivers" type="text"/><br/>
 			<textarea class="g_input empty_input mcontent" empty_value="Content"/></textarea><br/>
 			<input class="g_button msend" onclick="sendMail();" type="submit" value="Send" />
