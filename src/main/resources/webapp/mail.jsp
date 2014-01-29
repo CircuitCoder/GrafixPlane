@@ -13,6 +13,28 @@
 		<title>Mailbox</title>
 		<script src="/js/jquery.js" type="text/javascript"></script>
 		<script src="/js/mail.js" type="text/javascript"></script>
+		<style>
+		.mto {
+			margin-left: 50px;
+			margin-bottom: 0;
+		}
+		
+		.msubject {
+			border-radius: 5px 5px 0 0;
+			display: inline;
+			margin-bottom: 0;
+			font-size:1.5em;
+			border-bottom:none;
+		}
+		
+		.mcontent {
+			margin-top: 0;
+			border-top-left-radius: 0;
+			width:50em;
+			height:30em;
+			resize: none;
+		}
+		</style>
 	</head>
 	<body class="mailBody">
 		<%
@@ -26,5 +48,13 @@
 			<div class="mailCon" id="MC<%=i%>"></div>
 		</div>
 		<%} %>
+		
+		<div class="mailBody">
+			<br/>
+			<input class="g_input empty_input msubject" empty_value="Subject" type="text"/>
+			<input class="g_input empty_input mto" empty_value="Receivers" type="text"/><br/>
+			<textarea class="g_input empty_input mcontent" empty_value="Content"/></textarea><br/>
+			<input class="g_button msend" onclick="sendMail();" type="submit" value="Send" />
+		</div>
 	</body>
 </html>

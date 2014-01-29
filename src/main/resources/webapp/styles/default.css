@@ -30,6 +30,10 @@
     box-shadow: #3098ff 0px 0px 7px;
 }
 
+.empty_input {
+	color: #CCC;
+}
+
 .g_button {
 	font-size: 1.25em;
 	top: 0px;
@@ -70,14 +74,24 @@
 
 .mailBody {
 	margin:0;
+	
+	background: #DEF;
 }
 
 .mailTitle {
 	margin: 0;
+	padding: 5px 0 5px 15px;
+	transition: padding-left 0.5s;
 	
 	color: #378;
-	background: #AAA;
 	font-weight: bold;
+	font-size:1.5em;
+	
+	background: #CCC;
+}
+
+.mailRow[status="opened"] > .mailTitle {
+	padding-left: 20px;
 }
 
 .mailCon {
@@ -87,6 +101,6 @@
 	display: none;
 	height: auto;
 
-	background: #CCC;
+	background: #EEE;
 	overflow: hidden;
 }

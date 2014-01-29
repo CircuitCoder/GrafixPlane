@@ -40,18 +40,6 @@ public class MailServlet extends HttpServlet {
 		req.setAttribute("blocker", "0");
 		RequestDispatcher reqDis=req.getRequestDispatcher("/mail.jsp");
 		reqDis.include(req, resp);
-		
-		PrintWriter w=resp.getWriter();
-		w.println("<hr/>");
-		w.println("Subject: <input class=\"g_input\" type=\"text\" id=\"subject\"/>"
-				+ "Content: <input class=\"g_input\" type=\"text\" id=\"content\"/>"
-				+ "To: <input class=\"g_input\" type=\"text\" id=\"to\"/>"
-				+ "<div class=\"g_button\" onClick=\"sendMail();\">Send</div>");
-		
-		w.write("</body></html>");
-		
-		w.flush();
-		w.close();
 	}
 	
 	/**
@@ -69,7 +57,7 @@ public class MailServlet extends HttpServlet {
 		
 		if(action.equals("send")) {
 			//TODO: invalid symbols
-			String recstr[]=req.getParameter("rec").split("\\|");
+			String recstr[]=req.getParameter("to").split("\\|");
 			HashSet<Integer> rec=new HashSet<Integer>();
 			for(String s:recstr)
 				rec.add(Integer.valueOf(s));
