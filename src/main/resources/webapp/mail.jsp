@@ -24,11 +24,12 @@
 		}
 		
 		.msubject {
-			border-radius: 0;
+			border-radius: 5px 5px 0 0;
 			display: inline;
 			margin-bottom: 0;
 			font-size:1.5em;
 			border-bottom:none;
+			width: 20em;
 		}
 		
 		.mcontent {
