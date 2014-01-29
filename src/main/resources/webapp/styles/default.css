@@ -68,15 +68,25 @@
 	color:white;
 }
 
+.mailBody {
+	margin:0;
+}
+
 .mailTitle {
+	margin: 0;
+	
+	color: #378;
 	background: #AAA;
 	font-weight: bold;
 }
 
 .mailCon {
+	margin：0;
+	
+	/*on init*/
+	display: none;
+	height: auto;
+
+	background: #CCC;
 	overflow: hidden;
-	transition: height 1s;
-	-webkit-transition: height 1s;
-	-moz-transition: height 1s;
-	-o-transition: height 1s;
 }

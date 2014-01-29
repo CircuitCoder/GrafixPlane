@@ -34,12 +34,11 @@ function titleClick(index) {
 			var data=getMail(index);
 			cont.innerHTML="Send from: "+data[0]+"<br/>Subject: "+data[1]+"<br/>Content: "+data[2]+"<br/><br/>";
 		}
-		//TODO: not animating
-		cont.style.height="auto";
+		$(cont).slideDown(500);
 		parent.setAttribute("status","opened");
 	}
 	else {
-		cont.style.height="0";
+		$(cont).slideUp(500);
 		parent.setAttribute("status","closed")
 	}
 }
