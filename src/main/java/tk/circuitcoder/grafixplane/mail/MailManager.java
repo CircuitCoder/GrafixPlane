@@ -65,33 +65,41 @@ public class MailManager {
 		++size;
 	}
 	
-	public boolean delete(int index) {
-		int mailC=0;
-		synchronized (boxes) {
-			for(int i=0;i<boxCount;i++)
-				if((mailC+=boxes.get(i).size())>=index)
-				{
-					boxes.get(i).delete(index-mailC+boxes.get(i).size());
-					return true;
-				}
-		}
-		return false;
+	public boolean toggleDel(int MID) {
+		WrappedMail mail=getByID(MID);
+		if(mail==null) return false;
+		mail.toggleDel();
+		return true;
 	}
 	
-	public boolean remove(int index) throws SQLException {
-		int mailC=0;
+	public boolean toggleFlag(int MID) {
+		WrappedMail mail=getByID(MID);
+		if(mail==null) return false;
+		mail.toggleFlag();
+		return true;
+	}
+	
+	public boolean toggleUnread(int MID) {
+		WrappedMail mail=getByID(MID);
+		if(mail==null) return false;
+		mail.toggleUnread();
+		return true;
+	}
+	
+	public boolean remove(int MID) throws SQLException {
 		synchronized (boxes) {
-			for(int i=0;i<boxCount;i++)
-				if((mailC+=boxes.get(i).size())>=index)
-				{
-					if(boxes.get(i).remove(index-mailC+boxes.get(i).size())==0) {	//No mails in this mailbox
-						for(int j=i+1;j<boxCount;j++) {
+			for(int i=0;i<boxCount;i++) {
+				int oriS=boxes.get(i).size();
+				if(oriS!=boxes.get(i).remove(MID)) {
+					if(oriS==1) {
+						for(int j=i+1;j<boxCount;j++)	//NOT TESTED!
 							boxes.get(j).decIndex();
-						}
 						boxes.remove(i);
 					}
+					--size;
 					return true;
 				}
+			}
 		}
 		return false;
 	}
@@ -102,6 +110,16 @@ public class MailManager {
 			for(int i=0;i<boxCount;i++)
 				if((mailC+=boxes.get(i).size())>=index)
 					return boxes.get(i).getMail(index-mailC+boxes.get(i).size());
+		}
+		return null;
+	}
+	
+	public WrappedMail getByID(int MID) {
+		synchronized (boxes) {
+			for(int i=0;i<boxCount;i++) {
+				WrappedMail m=boxes.get(i).getByID(MID);
+				if(m!=null) return m;
+			}
 		}
 		return null;
 	}

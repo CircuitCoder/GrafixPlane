@@ -75,8 +75,16 @@ public class Mailbox {
 		/**
 		 * Set field <tt>unread</tt> to false
 		 */
-		public void read() {
-			unread=false;
+		public void toggleUnread() {
+			unread=!unread;
+		}
+		
+		public void toggleDel() {
+			deleted=!deleted;
+		}
+		
+		public void toggleFlag() {
+			flagged=!flagged;
 		}
 		
 		@Override
@@ -160,17 +168,27 @@ public class Mailbox {
 		return ++mailCount;
 	}
 	
-	public int delete(int index) {
-		seq.get(index).deleted=true;
-		return mailCount;
+	public int remove(int MID) throws SQLException {
+		WrappedMail mail;
+		synchronized (seq) {
+			int index=find(MID);
+			if(index<0) return mailCount;	//Didn't remove anything
+			mail=seq.remove(index);
+		}
+			if((--mail.mail.refCount)==0) {
+				Mail.remove(mail.MID);
+			}
+			return --mailCount;
 	}
 	
-	public int remove(int index) throws SQLException {
-		WrappedMail mail=seq.remove(index);
-		if((--mail.mail.refCount)==0) {
-			Mail.remove(mail.MID);
-		}
-		return --mailCount;
+	/**
+	 * Find the index of a mail with a specified ID
+	 * @param MID The specified MID
+	 * @return the index of the mail,or <tt>-1</tt> if the mail wasn't found in this box
+	 */
+	public int find(int MID) {
+		for(int i=0;i<mailCount;i++) if(seq.get(i).MID==MID) return i;
+		return -1;
 	}
 	
 	private void readMail(String mailString) {
@@ -188,6 +206,13 @@ public class Mailbox {
 	}
 	
 	public WrappedMail getMail(int index) {
+		if(index<0||index>=mailCount) return null;
+		return seq.get(index);
+	}
+	
+	public WrappedMail getByID(int MID) {
+		int index=find(MID);
+		if(index<0) return null;
 		return seq.get(index);
 	}
 	

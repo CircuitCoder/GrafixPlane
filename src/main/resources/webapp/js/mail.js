@@ -65,3 +65,81 @@ function titleClick(index) {
 		parent.setAttribute("status","closed")
 	}
 }
+
+function del(index) {
+	var ori=$("#MT"+index+" > .delBtn").val();
+	
+	var xhr=$.ajax({
+		type: "POST",
+		url:"/mail",
+		async: false,
+		dataType: "text",
+		data: {
+			action: 'toggledel',
+			index: index
+		}
+	}).done(function(data) {
+		$("#MT"+index+" > .delBtn").css("color","inhert")
+		$("#MT"+index+" > .delBtn").attr("onclick","toggledel("+index+");");
+		if(data=="0") $("#M"+index).fadeOut(500,function() {
+			$("#M"+index).remove();
+		});
+		else $("#MT"+index+" > .delBtn").val("Failed!");
+	}).fail(function() {
+		$("#MT"+index+" > .delBtn").css("color","inhert");
+		$("#MT"+index+" > .delBtn").val(ori);
+		$("#MT"+index+" > .delBtn").attr("onclick","del("+index+");");
+		alert("Request failed!");
+	})
+}
+
+function rm(index) {
+	var ori=$("#MT"+index+" > .rmBtn").val();
+	
+	var xhr=$.ajax({
+		type: "POST",
+		url:"/mail",
+		async: false,
+		dataType: "text",
+		data: {
+			action: 'remove',
+			index: index
+		}
+	}).done(function(data) {
+		$("#MT"+index+" > .rmBtn").css("color","inhert")
+		$("#MT"+index+" > .rmBtn").attr("onclick","rm("+index+");");
+		if(data=="0") $("#M"+index).fadeOut(500,function() {
+			$("#M"+index).remove();
+		});
+		else $("#MT"+index+" > .rmBtn").val("Failed!");
+	}).fail(function() {
+		$("#MT"+index+" > .rmBtn").css("color","inhert");
+		$("#MT"+index+" > .rmBtn").val(ori);
+		$("#MT"+index+" > .rmBtn").attr("onclick","rm("+index+");");
+		alert("Request failed!");
+	})
+}
+
+$(document).ready(function() {
+	$(".delBtn").each(function() {
+		var mid=$(this).parent().attr("id").substring(2)
+		$(this).click(function(e) {
+			$(this).css("color","#AAA");
+			$(this).val("...");
+			$(this).attr("onclick","");
+			del(mid);
+			e.stopPropagation()
+		})
+	})
+	
+	$(".rmBtn").each(function() {
+		var mid=$(this).parent().attr("id").substring(2)
+		$(this).click(function(e) {
+			$(this).css("color","#AAA");
+			$(this).val("...");
+			$(this).attr("onclick","");
+			rm(mid);
+			e.stopPropagation()
+		})
+	})
+})

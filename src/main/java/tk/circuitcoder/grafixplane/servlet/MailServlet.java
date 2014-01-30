@@ -70,8 +70,8 @@ public class MailServlet extends HttpServlet {
 			}
 		} else if(action.equals("read")) {
 			int index=Integer.parseInt(req.getParameter("index"));
-			WrappedMail m=User.getCurrentUser(req.getSession()).getMManager().getMail(index);
-			if(m.unread()) m.read();
+			WrappedMail m=User.getCurrentUser(req.getSession()).getMManager().getByID(index);
+			if(m.unread()) m.toggleUnread();
 			
 			Iterator<String> rec;
 			try {
@@ -92,9 +92,9 @@ public class MailServlet extends HttpServlet {
 				resp.getWriter().print(",ERROR");
 				e.printStackTrace();
 			}
-		} else if(action.equals("delete")) {
+		} else if(action.equals("toggledel")) {
 			int index=Integer.parseInt(req.getParameter("index"));
-			boolean b=User.getCurrentUser(req.getSession()).getMManager().delete(index);
+			boolean b=User.getCurrentUser(req.getSession()).getMManager().toggleDel(index);
 			if(b) resp.getWriter().print(0);
 			else resp.getWriter().print(1);
 		} else if(action.equals("remove")) {

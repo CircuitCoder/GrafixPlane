@@ -39,6 +39,20 @@
 			height:30em;
 			resize: none;
 		}
+		
+		.delBtn {
+			font-size:0.5em;
+			float:right;
+			margin-top:0;
+			margin-bottom:0;
+		}
+		
+		.rmBtn {
+			font-size:0.5em;
+			float:right;
+			margin-top:0;
+			margin-bottom:0;
+		}
 		</style>
 	</head>
 	<body class="mailBody">
@@ -47,7 +61,7 @@
 		ArrayList<WrappedMail> mailList;
 		String t=request.getParameter("type");
 		
-		if(t==null) mailList=mails.getMails(0, mails.size());
+		if(t==null) mailList=mails.getMails(0, mails.size(),0,-1,0);
 		else if(t.equals("deleted")) mailList=mails.getMails(0,mails.size(),0,1,0);
 		else if(t.equals("flagged")) mailList=mails.getMails(0,mails.size(),0,0,1);
 		else if(t.equals("unread")) mailList=mails.getMails(0,mails.size(),1,0,0);
@@ -57,9 +71,13 @@
 		for(int i=0;i<mailList.size();i++) {
 			WrappedMail m=mailList.get(i);
 		%>
-		<div class="mailRow" id="M<%=i%>" status="closed">
-			<div class="mailTitle" id="MT<%=i%>" onclick="titleClick(<%=i%>);"><%=m.getMail().subject%></div>
-			<div class="mailCon" id="MC<%=i%>"></div>
+		<div class="mailRow" id="M<%=m.getMID()%>" status="closed">
+			<div class="mailTitle" id="MT<%=m.getMID()%>" onclick="titleClick(<%=m.getMID()%>);">
+				<%=m.getMail().subject%>
+				<input class="g_button rmBtn" type="submit" value="Remove"/>
+				<input class="g_button delBtn" type="submit" value="<%=m.deleted()?"Undelete":"Delete"%>">
+			</div>
+			<div class="mailCon" id="MC<%=m.getMID()%>"></div>
 		</div>
 		<%} %>
 		
