@@ -1,4 +1,4 @@
-package tk.circuitcoder.grafixplane;
+package tk.circuitcoder.grafixplane.mail;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

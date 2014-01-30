@@ -35,7 +35,7 @@
 	</servlet-mapping>
 	
 	<listener>
-		<listener-class>tk.circuitcoder.grafixplane.User.SessionListener</listener-class>
+		<listener-class>tk.circuitcoder.grafixplane.user.User.SessionListener</listener-class>
 	</listener>
 	
 </web-app>

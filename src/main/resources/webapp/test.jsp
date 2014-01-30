@@ -1,4 +1,4 @@
-<%@page import="tk.circuitcoder.grafixplane.User"%>
+<%@page import="tk.circuitcoder.grafixplane.user.User"%>
 <html>
 	<body>
 		<% 
@@ -7,6 +7,5 @@
 		
 		response.getWriter().println(String.format("There are %d active session online.",User.getSessionCount()));
 		%>
-		
 	</body>
 </html>

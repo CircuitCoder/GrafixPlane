@@ -7,7 +7,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import tk.circuitcoder.grafixplane.GrafixPlane;
-import tk.circuitcoder.grafixplane.User;
+import tk.circuitcoder.grafixplane.user.User;
 
 /**
  * Generate one's HOME! How IMPORTANT!

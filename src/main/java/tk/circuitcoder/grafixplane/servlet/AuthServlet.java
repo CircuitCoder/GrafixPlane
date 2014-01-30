@@ -9,7 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import tk.circuitcoder.grafixplane.GrafixPlane;
-import tk.circuitcoder.grafixplane.User;
+import tk.circuitcoder.grafixplane.user.User;
 
 /**
  * Handles requests related to account & authorization

@@ -1,4 +1,4 @@
-package tk.circuitcoder.grafixplane;
+package tk.circuitcoder.grafixplane.user;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -13,6 +13,9 @@ import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
 
+import tk.circuitcoder.grafixplane.GrafixPlane;
+import tk.circuitcoder.grafixplane.mail.Mail;
+import tk.circuitcoder.grafixplane.mail.MailManager;
 import static tk.circuitcoder.grafixplane.GrafixPlane.*;
 
 /**

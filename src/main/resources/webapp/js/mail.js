@@ -48,9 +48,9 @@ function titleClick(index) {
 		if(cont.innerHTML=="") {
 			var data=getMail(index);
 			
+			var rec=data[1].split("|");
 			var recStr=new String(rec[0]);
 			//Add links
-			var rec=data[1].split("|");
 			for(var i=1;i<rec.length;i++) recStr+=","+rec[i];
 			
 			cont.innerHTML="Send from: "+data[0]+"<br/>Receivers: "+recStr+"<br/>Content: "+data[2]+"<br/><br/>";

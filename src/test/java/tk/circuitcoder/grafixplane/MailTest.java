@@ -10,11 +10,14 @@ import java.util.Set;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import tk.circuitcoder.grafixplane.Mailbox.WrappedMail;
-import tk.circuitcoder.grafixplane.User.AccessLevel;
-import tk.circuitcoder.grafixplane.User.NameExistsException;
-import tk.circuitcoder.grafixplane.User.UIDExistsException;
 import tk.circuitcoder.grafixplane.db.H2DatabaseManager;
+import tk.circuitcoder.grafixplane.mail.Mail;
+import tk.circuitcoder.grafixplane.mail.Mailbox;
+import tk.circuitcoder.grafixplane.mail.Mailbox.WrappedMail;
+import tk.circuitcoder.grafixplane.user.User;
+import tk.circuitcoder.grafixplane.user.User.AccessLevel;
+import tk.circuitcoder.grafixplane.user.User.NameExistsException;
+import tk.circuitcoder.grafixplane.user.User.UIDExistsException;
 
 public class MailTest {
 	@BeforeClass

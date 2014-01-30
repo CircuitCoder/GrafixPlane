@@ -1,7 +1,5 @@
-<%@page import="tk.circuitcoder.grafixplane.MailManager"%>
-<%@page import="tk.circuitcoder.grafixplane.User" %>
-<%@page import="tk.circuitcoder.grafixplane.Mailbox.WrappedMail" %>
-<%@page import="java.util.ArrayList" %>
+<%@page import="tk.circuitcoder.grafixplane.mail.MailManager<%@page import="tk.circuitcoder.grafixplane.user.User" %>
+<%@page import="tk.citk.circuitcoder.grafixplane.mail.Mailbox.WrappedMailage import="java.util.ArrayList" %>
 <!DOCTYPE html>
 <html>
 	<head>

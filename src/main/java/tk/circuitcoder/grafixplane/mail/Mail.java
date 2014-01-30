@@ -1,4 +1,4 @@
-package tk.circuitcoder.grafixplane;
+package tk.circuitcoder.grafixplane.mail;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import tk.circuitcoder.grafixplane.user.User;
 import static tk.circuitcoder.grafixplane.GrafixPlane.*;
 
 /**

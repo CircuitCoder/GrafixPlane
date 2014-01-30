@@ -1,11 +1,12 @@
-package tk.circuitcoder.grafixplane;
+package tk.circuitcoder.grafixplane.mail;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.ListIterator;
-import tk.circuitcoder.grafixplane.Mailbox.WrappedMail;
+
+import tk.circuitcoder.grafixplane.mail.Mailbox.WrappedMail;
 import static tk.circuitcoder.grafixplane.GrafixPlane.*;
 
 /**

@@ -8,7 +8,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 
-import tk.circuitcoder.grafixplane.User.AccessLevel;
+import tk.circuitcoder.grafixplane.user.User;
+import tk.circuitcoder.grafixplane.user.User.AccessLevel;
 import static tk.circuitcoder.grafixplane.GrafixPlane.*;
 import jline.console.ConsoleReader;
 

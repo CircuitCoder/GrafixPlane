@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<%@page import="tk.circuitcoder.grafixplane.User"%>
+<%@page import="tk.circuitcoder.grafixplane.user.User"%>
 <html>
 	<head>
 		<link rel="stylesheet" type="text/css" href="/styles/default.css" />

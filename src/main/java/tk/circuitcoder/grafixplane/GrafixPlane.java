@@ -29,10 +29,14 @@ import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.FileAppender;
 import ch.qos.logback.core.filter.AbstractMatcherFilter;
 import ch.qos.logback.core.spi.FilterReply;
-import tk.circuitcoder.grafixplane.User.AccessLevel;
 import tk.circuitcoder.grafixplane.db.DatabaseManager;
 import tk.circuitcoder.grafixplane.db.H2DatabaseManager;
 import tk.circuitcoder.grafixplane.filter.ControlFilter;
+import tk.circuitcoder.grafixplane.mail.Mail;
+import tk.circuitcoder.grafixplane.mail.MailManager;
+import tk.circuitcoder.grafixplane.mail.Mailbox;
+import tk.circuitcoder.grafixplane.user.User;
+import tk.circuitcoder.grafixplane.user.User.AccessLevel;;
 /**
  * Represent a GrafixPlane instance, containing all runtime data
  * @author CircuitCoder
