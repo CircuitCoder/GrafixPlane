@@ -47,7 +47,13 @@ function titleClick(index) {
 	if(parent.getAttribute("status")=="closed") {
 		if(cont.innerHTML=="") {
 			var data=getMail(index);
-			cont.innerHTML="Send from: "+data[0]+"<br/>Subject: "+data[1]+"<br/>Content: "+data[2]+"<br/><br/>";
+			
+			var recStr=new String(rec[0]);
+			//Add links
+			var rec=data[1].split("|");
+			for(var i=1;i<rec.length;i++) recStr+=","+rec[i];
+			
+			cont.innerHTML="Send from: "+data[0]+"<br/>Receivers: "+recStr+"<br/>Content: "+data[2]+"<br/><br/>";
 		}
 		$(cont).slideDown(500);
 		parent.setAttribute("status","opened");

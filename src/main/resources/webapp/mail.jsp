@@ -44,7 +44,16 @@
 	<body class="mailBody">
 		<%
 		MailManager mails=((User) request.getSession().getAttribute("g_user")).getMManager();
-		ArrayList<WrappedMail> mailList=mails.getMails(0, mails.size());
+		ArrayList<WrappedMail> mailList;
+		String t=request.getParameter("type");
+		
+		if(t==null) mailList=mails.getMails(0, mails.size());
+		else if(t.equals("deleted")) mailList=mails.getMails(0,mails.size(),0,1,0);
+		else if(t.equals("flagged")) mailList=mails.getMails(0,mails.size(),0,0,1);
+		else if(t.equals("unread")) mailList=mails.getMails(0,mails.size(),1,0,0);
+		else mailList=mails.getMails(0, mails.size());
+		
+		
 		for(int i=0;i<mailList.size();i++) {
 			WrappedMail m=mailList.get(i);
 		%>

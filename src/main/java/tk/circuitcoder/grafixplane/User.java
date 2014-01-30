@@ -49,6 +49,13 @@ public class User {
 	}
 	
 	public MailManager getMManager() {
+		if(mails==null)
+			try {
+				mails=MailManager.getManager(UID, boxCount);
+			} catch (SQLException e) {
+				//Ignore for now
+				e.printStackTrace();
+			}
 		return mails;
 	}
 	
@@ -150,7 +157,7 @@ public class User {
 	 * @param newMail The mail to be added
 	 */
 	public void recMail(Mail mail) {
-		mails.insert(mail,'P',0);	//personal mail
+		getMManager().insert(mail,'P',0);	//personal mail
 	}
 	
 	/**
@@ -158,19 +165,18 @@ public class User {
 	 * @throws SQLException 
 	 */
 	public void save() throws SQLException {
-		mails.save();
+		if(mails!=null) mails.save();
 	}
 	
 	/**
 	 * User instance can only be created by calling getUser()
-	 * @throws SQLEception If failing to read from database
 	 */
-	private User(int UID,String uname,AccessLevel level,int BoxCount) throws SQLException {
+	private User(int UID,String uname,AccessLevel level,int BoxCount) {
 		this.UID=UID;
 		this.username=uname;
 		this.accessLevel=level;
 		this.boxCount=BoxCount;
-		mails=MailManager.getManager(UID, boxCount);
+		mails=null;	//lazy load
 		this.sessions=new HashSet<HttpSession>();
 	}
 	
@@ -292,6 +298,18 @@ public class User {
 	 */
 	public static String getName(int UID) throws SQLException {
 		return getUser(UID).getUsername();
+	}
+	
+	/**
+	 * Get the names of a set of users
+	 * @param UIDs The users' UID
+	 * @return A string set, which contains the users' names
+	 * @throws SQLException If there are some thing wrong with the database
+	 */
+	public static Set<String> getNames(Set<Integer> UIDs) throws SQLException {
+		Set<String> s=new HashSet<String>();
+		for(Integer i:UIDs) s.add(getName(i));
+		return s;
 	}
 	
 	/**

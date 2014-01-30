@@ -1,12 +1,9 @@
 package tk.circuitcoder.grafixplane.servlet;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.rmi.server.UID;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashSet;
-
+import java.util.Iterator;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -15,7 +12,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import tk.circuitcoder.grafixplane.GrafixPlane;
 import tk.circuitcoder.grafixplane.Mail;
-import tk.circuitcoder.grafixplane.MailManager;
 import tk.circuitcoder.grafixplane.Mailbox.WrappedMail;
 import tk.circuitcoder.grafixplane.User;
 
@@ -33,9 +29,6 @@ public class MailServlet extends HttpServlet {
 			resp.sendRedirect("/login.jsp");
 			return;
 		}
-		
-		MailManager mails=((User) req.getSession().getAttribute("g_user")).getMManager();
-		ArrayList<WrappedMail> mailList=mails.getMails(0, mails.size());
 		
 		req.setAttribute("blocker", "0");
 		RequestDispatcher reqDis=req.getRequestDispatcher("/mail.jsp");
@@ -76,9 +69,24 @@ public class MailServlet extends HttpServlet {
 			}
 		} else if(action.equals("read")) {
 			int index=Integer.parseInt(req.getParameter("index"));
-			Mail m=User.getCurrentUser(req.getSession()).getMManager().getMail(index).getMail();
+			WrappedMail m=User.getCurrentUser(req.getSession()).getMManager().getMail(index);
+			if(m.unread()) m.read();
+			
+			Iterator<String> rec;
 			try {
-				resp.getWriter().print(User.getName(m.sender)+","+m.subject+","+m.content);
+				rec=User.getNames(m.getMail().receivers).iterator();
+			} catch (SQLException e1) {
+				resp.getWriter().print(",ERROR");
+				e1.printStackTrace();
+				return;
+			}
+			
+			StringBuilder recStr=new StringBuilder(rec.next());
+			
+			while(rec.hasNext()) recStr.append('|').append(rec.next());
+			
+			try {
+				resp.getWriter().print(User.getName(m.getMail().sender)+','+recStr+','+m.getMail().content);
 			} catch (SQLException e) {
 				resp.getWriter().print(",ERROR");
 				e.printStackTrace();
@@ -91,6 +99,7 @@ public class MailServlet extends HttpServlet {
 		} else if(action.equals("remove")) {
 			int index=Integer.parseInt(req.getParameter("index"));
 			boolean b;
+			
 			try {
 				b = User.getCurrentUser(req.getSession()).getMManager().remove(index);
 				if(b) resp.getWriter().print(0);
