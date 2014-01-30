@@ -43,8 +43,8 @@ import tk.circuitcoder.grafixplane.user.User.AccessLevel;;
  * @since 0.0.1
  */
 public class GrafixPlane {
-	static final public String VERSION_TEXT="GrafixPlane 0.0.3 SNAPSHOT";
-	static final public long VERSION=3L;
+	static final public String VERSION_TEXT="GrafixPlane 0.0.4 SNAPSHOT";
+	static final public long VERSION=4L;
 	static private GrafixPlane instance;
 	
 	private Server webserver;
