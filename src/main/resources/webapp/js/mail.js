@@ -1,4 +1,6 @@
 function sendMail() {
+	if(!checkEmpty()) return;
+	
 	$(".msend").css("color","#AAA");
 	$(".msend").val("Sending...");
 	$(".msend").attr("onclick","");

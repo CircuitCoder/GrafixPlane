@@ -22,8 +22,8 @@
 		%>
 		
 		<div style="text-align:center;">
-			<input id="uname" type="text" class="g_input empty_input" empty_value="Username" style="font-size: 1.25em"/><br/>
-			<input id="passwd" type="text" class="g_input empty_input" empty_value="Password" style="font-size: 1.25em"/><br/>
+			<input id="uname" type="text" class="g_input empty_input non_empty" empty_value="Username" style="font-size: 1.25em"/><br/>
+			<input id="passwd" type="text" class="g_input empty_input non_empty" empty_value="Password" style="font-size: 1.25em"/><br/>
 			<input name="submit" type="submit" value="Login" class="g_button main_button" style="font-size: 1.25em" onclick="login()"/>
 		</div>
 	

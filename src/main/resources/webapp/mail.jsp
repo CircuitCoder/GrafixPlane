@@ -65,9 +65,9 @@
 		
 		<div class="mailBody">
 			<br/>
-			<input class="g_input empty_input msubject" empty_value="Subject" type="text"/><br/>
-			<input class="g_input empty_input mto" empty_value="Receivers" type="text"/><br/>
-			<textarea class="g_input empty_input mcontent" empty_value="Content"/></textarea><br/>
+			<input class="g_input empty_input msubject non_empty" empty_value="Subject" type="text"/><br/>
+			<input class="g_input empty_input mto non_empty" empty_value="Receivers" type="text"/><br/>
+			<textarea class="g_input empty_input mcontent non_empty" empty_value="Content"/></textarea><br/>
 			<input class="g_button msend" onclick="sendMail();" type="submit" value="Send" />
 		</div>
 	</body>

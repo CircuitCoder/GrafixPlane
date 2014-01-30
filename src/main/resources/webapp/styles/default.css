@@ -19,7 +19,8 @@
     outline: none;
 	border: #AAA 1px solid;
     
-    transition: box-shadow 0.5s;
+    transition-property: box-shadow;
+    transition-duration: 0.5s;
 }
 
 .g_input:hover {
@@ -32,6 +33,14 @@
 
 .empty_input {
 	color: #CCC;
+}
+
+.non_empty {
+	transition-property: background-color,box-shadow,border-color;
+	transition-duration: 0.5s;
+}
+
+.g_input.non_empty {
 }
 
 .g_button {
@@ -50,10 +59,10 @@
 	background-color: #F9F9F9;
 	box-shadow: #333 0px 0px 0px;
 	
-	transition: all 0.5s;
-	-webkit-transition: all 0.5s;
-	-o-transition: all 0.5s;
-	-moz-transition: all 0.5s;
+	transition: color 0.5s,background-color 0.5s;
+	-webkit-transition: color 0.5s,background-color 0.5s;
+	-o-transition: color 0.5s,background-color 0.5s;
+	-moz-transition: color 0.5s,background-color 0.5s;
 }
 
 .g_button:hover {
