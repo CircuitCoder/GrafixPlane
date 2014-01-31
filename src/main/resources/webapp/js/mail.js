@@ -45,23 +45,25 @@ function getMail(index) {
 
 function titleClick(index) {
 	var parent=document.getElementById("M"+index);
-	var cont=document.getElementById("MC"+index);
+	var cont=$("#MC"+index+" > .mcont");
 	if(parent.getAttribute("status")=="closed") {
-		if(cont.innerHTML=="") {
+		if(cont.html()=="") {
 			var data=getMail(index);
 			
 			var rec=data[1].split("|");
-			var recStr=new String(rec[0]);
+			var recStr=new String("To: "+rec[0]);
 			//Add links
-			for(var i=1;i<rec.length;i++) recStr+=","+rec[i];
+			for(var i=1;i<rec.length;i++) recStr+=", "+rec[i];
 			
-			cont.innerHTML="Send from: "+data[0]+"<br/>Receivers: "+recStr+"<br/>Content: "+data[2]+"<br/><br/>";
+			$("#MC"+index+" > .msender").html(data[0]);
+			$("#MC"+index+" > .mrec").html(recStr);
+			cont.html(data[2]);
 		}
-		$(cont).slideDown(500);
+		$("#MC"+index).slideDown(500);
 		parent.setAttribute("status","opened");
 	}
 	else {
-		$(cont).slideUp(500);
+		$("#MC"+index).slideUp(500);
 		parent.setAttribute("status","closed")
 	}
 }

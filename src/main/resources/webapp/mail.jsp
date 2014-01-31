@@ -53,6 +53,20 @@
 			margin-top:0;
 			margin-bottom:0;
 		}
+		
+		.msender {
+			font-size:1.5em;
+		}
+		
+		.mrec {
+			font-size:0.75em;
+			color: #777;
+		}
+		
+		.mcont {
+			padding-left: 20px;
+			white-space: pre;
+		}
 		</style>
 	</head>
 	<body class="mailBody">
@@ -67,17 +81,33 @@
 		else if(t.equals("unread")) mailList=mails.getMails(0,mails.size(),1,0,0);
 		else mailList=mails.getMails(0, mails.size());
 		
-		
+		String colorStr,tColorStr;
 		for(int i=0;i<mailList.size();i++) {
 			WrappedMail m=mailList.get(i);
+			if(m.getType()=='P') {
+				colorStr="#999";
+				tColorStr="#CCC";
+			}
+			else if(m.getType()=='G') {
+				colorStr="#FFF";
+				tColorStr="#FFF";
+			}
+			else {	//Same as personal mail
+				colorStr="#999";
+				tColorStr="#CCC";
+			}
 		%>
 		<div class="mailRow" id="M<%=m.getMID()%>" status="closed">
-			<div class="mailTitle" id="MT<%=m.getMID()%>" onclick="titleClick(<%=m.getMID()%>);">
+			<div class="mailTitle" id="MT<%=m.getMID()%>" onclick="titleClick(<%=m.getMID()%>);" style="border-left: <%=tColorStr%> 10px solid; border-top: <%=tColorStr%> 5px solid;">
 				<%=m.getMail().subject%>
 				<input class="g_button rmBtn" type="submit" value="Remove"/>
 				<input class="g_button delBtn" type="submit" value="<%=m.deleted()?"Undelete":"Delete"%>">
 			</div>
-			<div class="mailCon" id="MC<%=m.getMID()%>"></div>
+			<div class="mailCon" id="MC<%=m.getMID()%>" style="border-left: <%=colorStr%> 10px solid;">
+				<span class="msender"></span>
+				<span class="mrec"></span>
+				<div class="mcont"></div>
+			</div>
 		</div>
 		<%} %>
 		
