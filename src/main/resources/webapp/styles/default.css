@@ -81,6 +81,51 @@
 	color:white;
 }
 
+.icon {
+	display:inline-block;
+	width:16px;
+	height:16px;
+	margin: 0 10px 0 0;
+	padding: 0px;
+	background-size:160px;
+	vertical-align:middle;
+}
+
+.g_checkbox {
+	display:inline-block;
+	width:32px;
+	height:32px;
+	margin: 0 10px 0 0;
+	padding: 0px;
+	background-size:320px;
+	vertical-align:middle;
+	
+	background-image:url('/icons/mail.png');
+	background-position: 0px 0px;
+}
+
+.g_checkbox.g_checked {
+	background-position: -32px 0px;
+}
+
+.g_flag {
+	display:inline-block;
+	width:32px;
+	height:32px;
+	margin: 0 10px 0 0;
+	padding: 0px;
+	background-size:320px;
+	vertical-align:middle;
+	
+	background-image:url('/icons/mail.png');
+	background-position: -64px 0px;
+}
+
+.g_flag.g_flagged {
+	background-position: -96px 0px;
+}
+	
+
 .mailBody {
 	margin:0;
 	
@@ -96,7 +141,7 @@
 }
 
 .mailTitle {
-	margin: 0;
+	margin:0;
 	padding: 5px 0 5px 15px;
 	transition: padding-left 0.5s,background-color 0.5s;;
 	

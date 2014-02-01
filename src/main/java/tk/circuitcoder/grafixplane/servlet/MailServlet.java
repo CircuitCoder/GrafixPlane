@@ -97,6 +97,11 @@ public class MailServlet extends HttpServlet {
 			boolean b=User.getCurrentUser(req.getSession()).getMManager().toggleDel(index);
 			if(b) resp.getWriter().print(0);
 			else resp.getWriter().print(1);
+		} else if(action.equals("toggleflag")) {
+			int index=Integer.parseInt(req.getParameter("index"));
+			boolean b=User.getCurrentUser(req.getSession()).getMManager().toggleFlag(index);
+			if(b) resp.getWriter().print(0);
+			else resp.getWriter().print(1);
 		} else if(action.equals("remove")) {
 			int index=Integer.parseInt(req.getParameter("index"));
 			boolean b;

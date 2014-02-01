@@ -71,16 +71,6 @@
 			padding-left: 20px;
 			white-space: pre;
 		}
-		
-		.icon {
-			display:inline-block;
-			width:16px;
-			height:16px;
-			margin: 0 10px 0 0;
-			padding: 0px;
-			background-size:160px;
-			vertical-align:middle;
-		}
 		</style>
 	</head>
 	<body class="mailBody">
@@ -113,6 +103,8 @@
 		%>
 		<div class="mailRow" id="M<%=m.getMID()%>" status="closed">
 			<div class="mailTitle" id="MT<%=m.getMID()%>" onclick="titleClick(<%=m.getMID()%>);" style="border-left: <%=tColorStr%> 10px solid; border-top: <%=tColorStr%> 5px solid;">
+				<div class="g_checkbox"></div>
+				<%=m.flagged()?"<div class=\"g_flag g_flagged\"></div>":"<div class=\"g_flag\"></div>"%>
 				<%=m.getMail().subject%>
 				<span class="g_button rmBtn"><span class="icon" style="background-image:url('/icons/mail.png'); background-position: -144px 0px;"></span>Remove</span>
 				<span class="g_button delBtn"><%=m.deleted()?

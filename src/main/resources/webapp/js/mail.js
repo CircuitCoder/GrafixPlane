@@ -137,10 +137,7 @@ function flag(index) {
 	}).done(function(data) {
 		$("#MT"+index+" > .flagBtn").css("color","inhert")
 		$("#MT"+index+" > .flagBtn").attr("onclick","flag("+index+");");
-		if(data=="0") $("#M"+index).fadeOut(500,function() {
-			$("#M"+index).remove();
-		});
-		else $("#MT"+index+" > .delBtn").val("Failed!");
+		if(data!="0") $("#MT"+index+" > .delBtn").val("Failed!");
 	}).fail(function() {
 		$("#MT"+index+" > .flagBtn").css("color","inhert");
 		$("#MT"+index+" > .flagBtn").val(ori);
@@ -162,13 +159,23 @@ $(document).ready(function() {
 	})
 	
 	$(".rmBtn").each(function() {
-		var mid=$(this).parent().attr("id").substring(2)
+		var mid=$(this).parent().attr("id").substring(2);
 		$(this).click(function(e) {
 			$(this).css("color","#AAA");
 			$(this).val("...");
 			$(this).attr("onclick","");
 			rm(mid);
 			e.stopPropagation()
+		})
+	})
+	
+	$('.g_flag').each(function(index) {
+		$(this).click(function(e) {
+			var mid=$(this).parent().attr("id").substring(2);
+			flag(mid);
+			if($(this).hasClass('g_flagged')) $(this).removeClass('g_flagged');
+			else $(this).addClass('g_flagged');
+			e.stopPropagation();
 		})
 	})
 })

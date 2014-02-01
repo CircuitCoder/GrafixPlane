@@ -14,6 +14,14 @@ function init() {
 			}
 		})
 	})
+	
+	$('.g_checkbox').each(function(index) {
+		$(this).click(function(e) {
+			if($(this).hasClass('g_checked')) $(this).removeClass('g_checked');
+			else $(this).addClass('g_checked');
+			e.stopPropagation();
+		})
+	})
 }
 
 function checkEmpty() {
