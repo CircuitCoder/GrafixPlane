@@ -82,7 +82,7 @@ function del(index) {
 		}
 	}).done(function(data) {
 		$("#MT"+index+" > .delBtn").css("color","inhert")
-		$("#MT"+index+" > .delBtn").attr("onclick","toggledel("+index+");");
+		$("#MT"+index+" > .delBtn").attr("onclick","del("+index+");");
 		if(data=="0") $("#M"+index).fadeOut(500,function() {
 			$("#M"+index).remove();
 		});
@@ -118,6 +118,33 @@ function rm(index) {
 		$("#MT"+index+" > .rmBtn").css("color","inhert");
 		$("#MT"+index+" > .rmBtn").val(ori);
 		$("#MT"+index+" > .rmBtn").attr("onclick","rm("+index+");");
+		alert("Request failed!");
+	})
+}
+
+function flag(index) {
+	var ori=$("#MT"+index+" > .flagBtn").val();
+	
+	var xhr=$.ajax({
+		type: "POST",
+		url:"/mail",
+		async: false,
+		dataType: "text",
+		data: {
+			action: 'toggleflag',
+			index: index
+		}
+	}).done(function(data) {
+		$("#MT"+index+" > .flagBtn").css("color","inhert")
+		$("#MT"+index+" > .flagBtn").attr("onclick","flag("+index+");");
+		if(data=="0") $("#M"+index).fadeOut(500,function() {
+			$("#M"+index).remove();
+		});
+		else $("#MT"+index+" > .delBtn").val("Failed!");
+	}).fail(function() {
+		$("#MT"+index+" > .flagBtn").css("color","inhert");
+		$("#MT"+index+" > .flagBtn").val(ori);
+		$("#MT"+index+" > .flagBtn").attr("onclick","flag("+index+");");
 		alert("Request failed!");
 	})
 }

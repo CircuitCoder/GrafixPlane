@@ -41,17 +41,21 @@
 		}
 		
 		.delBtn {
-			font-size:0.5em;
+			display:inline;
+			font-size:16px;
 			float:right;
 			margin-top:0;
 			margin-bottom:0;
+			cursor:pointer;
 		}
 		
 		.rmBtn {
-			font-size:0.5em;
+			display:inline;
+			font-size:16px;
 			float:right;
 			margin-top:0;
 			margin-bottom:0;
+			cursor:pointer;
 		}
 		
 		.msender {
@@ -66,6 +70,16 @@
 		.mcont {
 			padding-left: 20px;
 			white-space: pre;
+		}
+		
+		.icon {
+			display:inline-block;
+			width:16px;
+			height:16px;
+			margin: 0 10px 0 0;
+			padding: 0px;
+			background-size:160px;
+			vertical-align:middle;
 		}
 		</style>
 	</head>
@@ -100,8 +114,10 @@
 		<div class="mailRow" id="M<%=m.getMID()%>" status="closed">
 			<div class="mailTitle" id="MT<%=m.getMID()%>" onclick="titleClick(<%=m.getMID()%>);" style="border-left: <%=tColorStr%> 10px solid; border-top: <%=tColorStr%> 5px solid;">
 				<%=m.getMail().subject%>
-				<input class="g_button rmBtn" type="submit" value="Remove"/>
-				<input class="g_button delBtn" type="submit" value="<%=m.deleted()?"Undelete":"Delete"%>">
+				<span class="g_button rmBtn"><span class="icon" style="background-image:url('/icons/mail.png'); background-position: -144px 0px;"></span>Remove</span>
+				<span class="g_button delBtn"><%=m.deleted()?
+						"<span class=\"icon\" style=\"background-image:url('/icons/mail.png'); background-position: -80px 0px;\"></span>Undelete":
+						"<span class=\"icon\" style=\"background-image:url('/icons/mail.png'); background-position: -64px 0px;\"></span>Delete"%></span>
 			</div>
 			<div class="mailCon" id="MC<%=m.getMID()%>" style="border-left: <%=colorStr%> 10px solid;">
 				<span class="msender"></span>
