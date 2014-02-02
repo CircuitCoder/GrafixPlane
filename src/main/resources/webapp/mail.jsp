@@ -40,21 +40,12 @@
 			resize: none;
 		}
 		
-		.delBtn {
-			display:inline;
+		.m_button {
+			display:table-cell;
 			font-size:16px;
-			float:right;
-			margin-top:0;
-			margin-bottom:0;
-			cursor:pointer;
-		}
-		
-		.rmBtn {
-			display:inline;
-			font-size:16px;
-			float:right;
-			margin-top:0;
-			margin-bottom:0;
+			margin: 0 3px 0 0;
+			float: right;
+			padding:3px 5px 3px 5px;
 			cursor:pointer;
 		}
 		
@@ -106,10 +97,11 @@
 				<div class="g_checkbox"></div>
 				<%=m.flagged()?"<div class=\"g_flag g_flagged\"></div>":"<div class=\"g_flag\"></div>"%>
 				<%=m.getMail().subject%>
-				<span class="g_button rmBtn"><span class="icon" style="background-image:url('/icons/mail.png'); background-position: -144px 0px;"></span>Remove</span>
-				<span class="g_button delBtn"><%=m.deleted()?
-						"<span class=\"icon\" style=\"background-image:url('/icons/mail.png'); background-position: -80px 0px;\"></span>Undelete":
-						"<span class=\"icon\" style=\"background-image:url('/icons/mail.png'); background-position: -64px 0px;\"></span>Delete"%></span>
+				<span mid=<%=m.getMID()%> class="g_button m_button rmBtn"><span class="icon" style="background-image:url('/icons/mail.png'); background-position: -144px 0px;"></span>Remove</span>
+				<span mid=<%=m.getMID()%> class="g_button m_button delBtn"><%=m.deleted()?
+					"<span class=\"icon\" style=\"background-image:url('/icons/mail.png'); background-position: -80px 0px;\"></span>Undelete":
+					"<span class=\"icon\" style=\"background-image:url('/icons/mail.png'); background-position: -64px 0px;\"></span>Delete"%></span>
+		
 			</div>
 			<div class="mailCon" id="MC<%=m.getMID()%>" style="border-left: <%=colorStr%> 10px solid;">
 				<span class="msender"></span>
