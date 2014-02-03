@@ -4,7 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -24,10 +24,10 @@ public class Mail {
 	public Set<Integer> receivers;
 	public String subject;
 	public String content;
-	public Timestamp sentTime;
 	public String attachments;
 	public int replyTo;
 	public int refCount;
+	public long sentTime;
 	
 	private static PreparedStatement mailByID;
 	private static PreparedStatement newMail;
@@ -39,6 +39,10 @@ public class Mail {
 
 	private Mail() {
 		receivers=new HashSet<Integer>();
+	}
+	
+	public Date getSentDate() {
+		return new Date(sentTime);
 	}
 	
 	public int saveRef() throws SQLException {
@@ -70,13 +74,13 @@ public class Mail {
 	
 	public static Mail send(User sender,Set<Integer> receivers,String subject,String content) throws SQLException {
 		//TODO: attachment
-		return newMail(sender.getUID(),receivers,subject,content,"",0).insertAll();
+		return newMail(sender.getUID(),receivers,subject,content,"",0,System.currentTimeMillis()).insertAll();
 	}
 	
 	public static Mail reply(User sender,Mail ori,String subject,String content) throws SQLException {
 		HashSet<Integer> rec=new HashSet<Integer>();
 		rec.add(ori.sender);
-		return newMail(sender.getUID(),rec,subject,content,"",ori.MID).insertAll();
+		return newMail(sender.getUID(),rec,subject,content,"",ori.MID,System.currentTimeMillis()).insertAll();
 	}
 	
 	public static boolean remove(int MID) throws SQLException {
@@ -91,7 +95,7 @@ public class Mail {
 		return mailPool.containsKey(MID);
 	}
 	
-	private static synchronized Mail newMail(int sender,Set<Integer> receivers,String subject,String content,String attachments,int replyTo) throws SQLException {
+	private static synchronized Mail newMail(int sender,Set<Integer> receivers,String subject,String content,String attachments,int replyTo,long time) throws SQLException {
 		int mid=getGP().getConfig().getInt("mailCount")+1;
 		getGP().getConfig().setInt("mailCount", mid);
 		String rec="";
@@ -105,6 +109,7 @@ public class Mail {
 		newMail.setString(6, attachments);
 		newMail.setInt(7, replyTo);
 		newMail.setInt(8,receivers.size());	//Receivers' INBOXes
+		newMail.setLong(9,time);
 		
 		int updateCount=newMail.executeUpdate();
 		if(updateCount!=1) return null;	//Not sent
@@ -118,6 +123,7 @@ public class Mail {
 		result.attachments=attachments;
 		result.replyTo=replyTo;
 		result.refCount=receivers.size();
+		result.sentTime=time;
 		
 		mailPool.put(mid,result);
 		return result;
@@ -145,6 +151,7 @@ public class Mail {
 		mail.attachments=resultSet.getString(6);
 		mail.replyTo=resultSet.getInt(7);
 		mail.refCount=resultSet.getInt(8);
+		mail.sentTime=resultSet.getLong(9);
 		
 		return mail;
 	}
@@ -167,7 +174,7 @@ public class Mail {
 	
 	public static void init(Connection conn) throws SQLException {
 		mailByID=conn.prepareStatement("SELECT * FROM MAIL WHERE(MID=?)");
-		newMail=conn.prepareStatement("INSERT INTO MAIL VALUES(?,?,?,?,?,?,?,?)");
+		newMail=conn.prepareStatement("INSERT INTO MAIL VALUES(?,?,?,?,?,?,?,?,?)");
 		rmMail=conn.prepareStatement("DELETE FROM MAIL WHERE MID = ?");
 		mailBySender=conn.prepareStatement("SELECT * FROM MAIL WHERE(Sender = ?)");
 		updateRef=conn.prepareStatement("UPDATE MAIL SET RefCount = ? WHERE MID = ?");

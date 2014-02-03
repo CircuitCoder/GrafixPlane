@@ -2,6 +2,8 @@
 <%@page import="tk.circuitcoder.grafixplane.user.User" %>
 <%@page import="tk.circuitcoder.grafixplane.mail.Mailbox.WrappedMail"%>
 <%@page import="java.util.ArrayList" %>
+<%@page import="java.util.Date" %>
+<%@page import="java.text.SimpleDateFormat" %>
 <!DOCTYPE html>
 <html>
 	<head>
@@ -15,6 +17,12 @@
 		<script src="/js/mail.js" type="text/javascript"></script>
 		<script src="/js/util.js" type="text/javascript"></script>
 		<style>
+		.mailSentTime {
+			float:right;
+			margin-right: 5px;
+			color: #777;
+		}
+		
 		.mto {
 			margin-bottom: 0;
 			margin-top: 0;
@@ -56,6 +64,11 @@
 		.mrec {
 			font-size:0.75em;
 			color: #777;
+		}
+				
+		.mtime {
+			font-size:1em;
+			color:#356;
 		}
 		
 		.mcont {
@@ -104,6 +117,9 @@
 	else if(t.equals("flagged")) mailList=mails.getMails(0,mails.size(),0,0,1);
 	else if(t.equals("unread")) mailList=mails.getMails(0,mails.size(),1,0,0);
 	else mailList=mails.getMails(0, mails.size());
+	
+	SimpleDateFormat titleTime=new SimpleDateFormat("MM-dd");
+	SimpleDateFormat innerTime=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 	%>
 	
 	<body class="mailBody">
@@ -132,6 +148,8 @@
 					colorStr="#999";
 					tColorStr="#CCC";
 				}
+				
+				Date d=m.getMail().getSentDate();
 			%>
 			<div class="mailRow" id="M<%=m.getMID()%>" status="closed">
 				<div class="mailTitle" id="MT<%=m.getMID()%>" onclick="titleClick(<%=m.getMID()%>);" style="border-left: <%=tColorStr%> 10px solid; border-top: <%=tColorStr%> 5px solid;">
@@ -142,11 +160,13 @@
 					<span mid=<%=m.getMID()%> class="g_button m_button delBtn"><%=m.deleted()?
 						"<span class=\"icon\" style=\"background-image:url('/icons/mail.png'); background-position: -80px 0px;\"></span>Undelete":
 						"<span class=\"icon\" style=\"background-image:url('/icons/mail.png'); background-position: -64px 0px;\"></span>Delete"%></span>
+					<span class="mailSentTime"><%=titleTime.format(d)%></span>
 		
 				</div>
 				<div class="mailCon" id="MC<%=m.getMID()%>" style="border-left: <%=colorStr%> 10px solid;">
 					<span class="msender"></span>
 					<span class="mrec"></span>
+					<span class="mtime"><%=innerTime.format(d)%></span>
 					<div class="mcont"></div>
 				</div>
 			</div>

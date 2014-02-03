@@ -389,7 +389,8 @@ public class GrafixPlane {
 					+ "Content varchar,"
 					+ "Attachment varchar,"	//Syntax: FID|FID|FID|...FID|
 					+ "ReplyTo int(10) UNSIGNED," //0 for new mail
-					+ "RefCount smallint UNSIGNED"
+					+ "RefCount smallint UNSIGNED,"
+					+ "SentTime bigint UNSIGNED"
 					+ ");");
 		}
 		

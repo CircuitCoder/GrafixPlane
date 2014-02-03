@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Calendar;
 import java.util.Set;
 
 import org.junit.BeforeClass;
@@ -42,7 +43,8 @@ public class MailTest {
 				+ "Content varchar,"
 				+ "Attachment varchar,"
 				+ "ReplyTo int(10) UNSIGNED,"
-				+ "RefCount smallint UNSIGNED"
+				+ "RefCount smallint UNSIGNED,"
+				+ "SentTime bigint UNSIGNED"
 				+ ");");
 		stat.execute("CREATE TABLE MAILBOX ("
 				+ "UID int(10) UNSIGNED,"
@@ -51,9 +53,9 @@ public class MailTest {
 				+ "MailCount smallint,"
 				+ ");");
 		
-		conn.prepareStatement("INSERT INTO MAIL VALUES (1234,1,'2|3|','A','Nothing','1|',0,1)").execute();
-		conn.prepareStatement("INSERT INTO MAIL VALUES (5678,1,'2|4|','B','Anything','2|',0,2)").execute();
-		conn.prepareStatement("INSERT INTO MAIL VALUES (1111,2,'1','C','Anything','2|',1234,1)").execute();
+		conn.prepareStatement("INSERT INTO MAIL VALUES (1234,1,'2|3|','A','Nothing','1|',0,1,1000)").execute();
+		conn.prepareStatement("INSERT INTO MAIL VALUES (5678,1,'2|4|','B','Anything','2|',0,2,2000)").execute();
+		conn.prepareStatement("INSERT INTO MAIL VALUES (1111,2,'1','C','Anything','2|',1234,1,3000)").execute();
 		Mail.init(conn);
 		User.init(conn);
 		
@@ -66,6 +68,9 @@ public class MailTest {
 	@Test
 	public void getMailTest() throws SQLException {
 		Mail mail=Mail.getMail(1234);
+		Calendar cal=Calendar.getInstance();
+		cal.setTime(mail.getSentDate());
+		
 		assertNotNull(mail);
 		assertEquals("A",mail.subject);
 		assertTrue(mail.receivers.contains(2));
@@ -73,6 +78,8 @@ public class MailTest {
 		assertEquals(1,mail.sender);
 		assertEquals("Nothing", mail.content);
 		assertEquals(0, mail.replyTo);
+		assertEquals(1000,mail.sentTime);
+		assertEquals(1,cal.get(Calendar.SECOND));
 	}
 
 	@Test
