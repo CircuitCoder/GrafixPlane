@@ -24,8 +24,23 @@ public class Launcher {
 			.withRequiredArg()
 			.ofType(Integer.class)
 			.defaultsTo(80);
+		parser.acceptsAll(Arrays.asList("r","root"),"Password for the root user")
+			.withRequiredArg()
+			.ofType(String.class);
+		parser.acceptsAll(Arrays.asList("d","database"),"The name of the database to use")
+			.withRequiredArg()
+			.defaultsTo(new String[]{"GrafixPlane"})
+			.ofType(String.class);
+		parser.acceptsAll(Arrays.asList("du","dbuser"),"The username used for connecting to the database")
+			.withRequiredArg()
+			.defaultsTo(new String[]{""})
+			.ofType(String.class);
+		parser.acceptsAll(Arrays.asList("dp","dbpassword"),"The password used for connecting to the database")
+			.withRequiredArg()
+			.defaultsTo(new String[]{""})
+			.ofType(String.class);
 		parser.acceptsAll(Arrays.asList("d","debug"), "Enable debug mode");
-		parser.acceptsAll(Arrays.asList("?","help"), "Show the help text");
+		parser.acceptsAll(Arrays.asList("?","help"), "Show the help text").isForHelp();
 		parser.acceptsAll(Arrays.asList("v","version"), "Show the version");
 		
 		OptionSet options=null;

@@ -14,7 +14,6 @@ import tk.circuitcoder.grafixplane.GrafixPlane;
  * @since 0.0.1
  */
 public class H2DatabaseManager extends DatabaseManager {
-	
 	Server database;
 	int port;
 	

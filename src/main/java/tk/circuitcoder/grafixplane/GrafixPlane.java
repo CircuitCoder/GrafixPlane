@@ -163,9 +163,11 @@ public class GrafixPlane {
 		webserver.setHandler(handlers);
 		//Other POP IMAP SMTP Server...
 		
-		//TODO: add some options for databases
 		//Now default user & passwd
 		db=new H2DatabaseManager();
+		db.setDefaultDB((String) options.valueOf("d"));
+		db.setDBUser((String) options.valueOf("du"));
+		db.setDBPasswd((String) options.valueOf("dp"));
 		db.startDB(9750);
 		try {
 			conn=db.getConn();
@@ -185,11 +187,11 @@ public class GrafixPlane {
 		}
 		
 		//initialize the administrative account with random passwd
-		Random rand=new Random();
-		int passwd=rand.nextInt(100000000);
-		this.logger.info("Updating admin password: "+passwd);
-		if(!User.modifyPasswd(0, String.valueOf(passwd))) {
-			User.newUser(0,"GAdmin", String.valueOf(passwd), AccessLevel.ROOT);
+		String passwdStr=(String) options.valueOf("r");
+		if(passwdStr==null) passwdStr=String.valueOf(new Random().nextInt(100000000));
+		this.logger.info("Updating admin password: "+passwdStr);
+		if(!User.modifyPasswd(0, passwdStr)) {
+			User.newUser(0,"GAdmin", passwdStr, AccessLevel.ROOT);
 		}
 		
 		this.logger.info("Starting WebServer on port "+port);

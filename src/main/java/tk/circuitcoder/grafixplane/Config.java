@@ -101,5 +101,4 @@ public class Config {
 			return true;
 		}
 	}
-	//TODO: not saving
 }
