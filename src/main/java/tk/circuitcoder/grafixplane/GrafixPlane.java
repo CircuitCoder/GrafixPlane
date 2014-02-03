@@ -360,7 +360,7 @@ public class GrafixPlane {
 					+ ")");
 			
 			config=new Config();
-			config.init(conn, Arrays.asList("mailCount:0","UIDCount:0","BoxCapacity:100")); //Initialize the table
+			config.init(conn, Arrays.asList("mailCount:0","UIDCount:0","BIDCount:1","BoxCapacity:100")); //Initialize the table
 		}
 		
 		
@@ -399,6 +399,7 @@ public class GrafixPlane {
 			this.logger.info("Creating table MAILBOX");
 			Statement stat=conn.createStatement();
 			stat.execute("CREATE TABLE MAILBOX ("
+					+ "BID int UNSIGNED,"
 					+ "UID int(10) UNSIGNED,"	//The UID of its owner
 					+ "Mails varchar,"	//Mails, Syntax: ......||MID@Box'Type,status||......
 					+ "BoxCount smallint,"	//The index of this Box

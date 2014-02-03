@@ -91,10 +91,11 @@ public class MailManager {
 			for(int i=0;i<boxCount;i++) {
 				int oriS=boxes.get(i).size();
 				if(oriS!=boxes.get(i).remove(MID)) {
-					if(oriS==1) {
+					if(oriS==1&&boxCount!=0) {
 						for(int j=i+1;j<boxCount;j++)	//NOT TESTED!
 							boxes.get(j).decIndex();
 						boxes.remove(i);
+						--boxCount;
 					}
 					--size;
 					return true;

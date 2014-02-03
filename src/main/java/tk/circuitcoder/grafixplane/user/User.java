@@ -13,6 +13,7 @@ import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
 
+import tk.circuitcoder.grafixplane.Config;
 import tk.circuitcoder.grafixplane.GrafixPlane;
 import tk.circuitcoder.grafixplane.mail.Mail;
 import tk.circuitcoder.grafixplane.mail.MailManager;
@@ -324,9 +325,13 @@ public class User {
 	 * @throws SQLException If there are some thing wrong with the database
 	 * @throws NameExistsException if this name already belongs to another user
 	 */
-	public synchronized static User newUser(String name,String passwd,AccessLevel level) throws SQLException, NameExistsException {
-		int newID=getGP().getConfig().getInt("UIDCount")+1;
-		getGP().getConfig().setInt("UIDCount", newID);
+	public static User newUser(String name,String passwd,AccessLevel level) throws SQLException, NameExistsException {
+		Config c=getGP().getConfig();
+		int newID;
+		synchronized(c) {
+			newID=getGP().getConfig().getInt("UIDCount")+1;
+			getGP().getConfig().setInt("UIDCount", newID);
+		}
 		try {
 			return newUser(newID, name, passwd, level);
 		} catch (UIDExistsException e) {
@@ -348,7 +353,7 @@ public class User {
 	 * @throws NameExistsException if this name already belongs to another user
 	 * @throws UIDExistsException if this UID already belongs to another user
 	 */
-	public synchronized static User newUser(int UID,String name,String passwd,AccessLevel level) throws SQLException, NameExistsException, UIDExistsException {
+	public static User newUser(int UID,String name,String passwd,AccessLevel level) throws SQLException, NameExistsException, UIDExistsException {
 		userByName.setString(1,name);
 		if(userByName.executeQuery().first()) throw new NameExistsException();	//A user with same name already exists
 		userByID.setInt(1, UID);

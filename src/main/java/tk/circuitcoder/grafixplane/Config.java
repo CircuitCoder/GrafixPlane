@@ -21,7 +21,9 @@ public class Config {
 	}
 	
 	public String get(String key) {
-		return configs.get(key);
+		synchronized (configs) {
+			return configs.get(key);
+		}
 	}
 	
 	public Integer getInt(String key) {
@@ -31,7 +33,9 @@ public class Config {
 	}
 	
 	public String set(String key,String value) {
-		return configs.put(key, value);
+		synchronized (configs) {
+			return configs.put(key, value);
+		}
 	}
 	
 	public String setInt(String key,int value) {
@@ -77,23 +81,25 @@ public class Config {
 	}
 	
 	public boolean save(Connection conn) {
-		try {
-			PreparedStatement stat=conn.prepareStatement("UPDATE GRAFIX SET Value = ? WHERE Entry = ?");
-			PreparedStatement newEntry=conn.prepareStatement("INSERT INTO GRAFIX VALUES (?,?)");
-			for(String k:configs.keySet()) {
-				stat.setString(2,k);
-				stat.setString(1,configs.get(k));
-				if(stat.executeUpdate()==0) {
-					newEntry.setString(1,k);
-					newEntry.setString(2,configs.get(k));
-					newEntry.execute();
+		synchronized (configs) {
+			try {
+				PreparedStatement stat=conn.prepareStatement("UPDATE GRAFIX SET Value = ? WHERE Entry = ?");
+				PreparedStatement newEntry=conn.prepareStatement("INSERT INTO GRAFIX VALUES (?,?)");
+				for(String k:configs.keySet()) {
+					stat.setString(2,k);
+					stat.setString(1,configs.get(k));
+					if(stat.executeUpdate()==0) {
+						newEntry.setString(1,k);
+						newEntry.setString(2,configs.get(k));
+						newEntry.execute();
+					}
 				}
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
+			} catch (SQLException e) {
+				e.printStackTrace();
 			return false;
+			}
+			return true;
 		}
-		return true;
 	}
 	//TODO: not saving
 }

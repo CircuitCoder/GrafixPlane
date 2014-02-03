@@ -7,6 +7,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import tk.circuitcoder.grafixplane.Config;
+import tk.circuitcoder.grafixplane.GrafixPlane;
+
 /**
  * Represent a mailbox used to store mail information<br/>
  * A mailbox, stores a series of mail belonging to the same user in a string in the database<br/>
@@ -105,6 +108,7 @@ public class Mailbox {
 	private static PreparedStatement saveBox;
 	private static PreparedStatement newBox;
 	
+	private int BID;
 	private boolean isNew;
 	private ArrayList<WrappedMail> seq;
 	private final int UID;
@@ -122,6 +126,13 @@ public class Mailbox {
 	}
 	
 	private Mailbox(boolean isNew,int UID,int index) {
+		Config config=GrafixPlane.getGP().getConfig();
+		int BID;
+		synchronized (config) {
+			BID=config.getInt("BIDCount")+1;
+			config.setInt("BIDCount", BID);
+		}
+		this.BID=BID;
 		this.UID=UID;
 		this.isNew=isNew;
 		if(isNew) mailCount=0;
@@ -137,20 +148,25 @@ public class Mailbox {
 		return mailCount;
 	}
 	
+	public boolean empty() {
+		return mailCount==0;
+	}
+	
 	public void save() throws SQLException {
 		if(isNew) {
-			newBox.setInt(1,UID);
-			newBox.setString(2, this.toString());
-			newBox.setInt(3,boxCount);
-			newBox.setInt(4,mailCount);
+			newBox.setInt(1,BID);
+			newBox.setInt(2,UID);
+			newBox.setString(3, this.toString());
+			newBox.setInt(4,boxCount);
+			newBox.setInt(5,mailCount);
 			newBox.executeUpdate();
 			isNew=false;
 		}
 		else {
-			saveBox.setString(1,this.toString());
-			saveBox.setInt(2,mailCount);
-			saveBox.setInt(3,UID);
-			saveBox.setInt(4,boxCount);
+			saveBox.setInt(4,BID);
+			saveBox.setInt(1,boxCount);
+			saveBox.setString(2,this.toString());
+			saveBox.setInt(3,mailCount);
 			saveBox.executeUpdate();
 		}
 	}
@@ -247,9 +263,10 @@ public class Mailbox {
 		return mail;
 	}
 	
-	public static Mailbox parseBox(int UID,int index,String mails,int mailCount) {
+	public static Mailbox parseBox(int BID,int UID,int index,String mails,int mailCount) {
 		String mailstrs[]=mails.split("\\|");
 		Mailbox result=new Mailbox(false,UID,index);
+		result.BID=BID;
 		result.mailCount=mailCount;
 		for(int i=0;i<mailCount;i++) 
 			result.readMail(mailstrs[i]);	//lazyLoad
@@ -262,14 +279,14 @@ public class Mailbox {
 		List<Mailbox> result=new ArrayList<Mailbox>(boxCount);
 		if(!resultSet.first()) return result;
 		do {
-			result.add(parseBox(uid,resultSet.getInt(3),resultSet.getString(2), resultSet.getInt(4)));
+			result.add(parseBox(resultSet.getInt(1),uid,resultSet.getInt(4),resultSet.getString(3), resultSet.getInt(5)));
 		} while(resultSet.next());
 		return result;
 	}
 	
 	public static void init(Connection conn) throws SQLException {
 		getBox=conn.prepareStatement("SELECT * FROM MAILBOX WHERE UID = ? ORDER BY BoxCount ASC");
-		saveBox=conn.prepareStatement("UPDATE MAILBOX SET Mails = ?, MailCount = ? WHERE UID = ? AND BoxCount = ?");
-		newBox=conn.prepareStatement("INSERT INTO MAILBOX VALUES (?,?,?,?)");
+		saveBox=conn.prepareStatement("UPDATE MAILBOX SET BoxCount = ?, Mails = ?, MailCount = ? WHERE BID = ?");
+		newBox=conn.prepareStatement("INSERT INTO MAILBOX VALUES (?,?,?,?,?)");
 	}
 }

@@ -47,6 +47,7 @@ public class MailTest {
 				+ "SentTime bigint UNSIGNED"
 				+ ");");
 		stat.execute("CREATE TABLE MAILBOX ("
+				+ "BID int UNSIGNED,"
 				+ "UID int(10) UNSIGNED,"
 				+ "Mails varchar,"
 				+ "BoxCount smallint,"
