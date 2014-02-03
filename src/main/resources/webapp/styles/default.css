@@ -108,6 +108,10 @@
 	background-position: -24px 0px;
 }
 
+.requireSelect {
+	display:none;
+}
+
 .g_flag {
 	display:inline-block;
 	width:24px;
