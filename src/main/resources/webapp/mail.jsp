@@ -100,6 +100,9 @@ public void jspInit() {
 		
 		#mailCtrl {
 			padding-left:18px;
+			background-color:white;
+			font-size:0.8em;
+			border-top:#BDD 5px solid;
 		}
 		
 		#mailSend {
@@ -152,7 +155,7 @@ public void jspInit() {
 				<%= (t!=null&&t.equals("deleted"))?
 						"<button class=\"g_button requireSelect\" id=\"delAll\" onclick=\"delAll()\">"+bundle.getString("mail.ctrl.undelall")+"</button>":
 						"<button class=\"g_button requireSelect\" id=\"delAll\" onclick=\"delAll()\">"+bundle.getString("mail.ctrl.delall")+"</button>"%>
-				<button class="g_button requireSelect" id="rmAll" onclick="rmAll()">"+bundle.getString("mail.ctrl.rmall")+"</button> 
+				<button class="g_button requireSelect" id="rmAll" onclick="rmAll()"><%=bundle.getString("mail.ctrl.rmall")%></button> 
 			</div>
 			<%
 			String colorStr,tColorStr;
