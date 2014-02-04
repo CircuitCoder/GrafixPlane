@@ -178,12 +178,24 @@ function openSidebar() {
 	$("#sidePanel").css("left","0");
 	$("#mailPanel").css("margin-left","250px");
 	sideBarOpen=true;
+	
+	$("#toggleSidebar").css("border-radius","5px 5px 0 0");
+	
+	$("#toggleSidebar").css("-webkit-transform","rotate(270deg)");
+	$("#toggleSidebar").css("-ms-transform","rotate(270deg)");
+	$("#toggleSidebar").css("transform","rotate(270deg)");
 }
 
 function closeSidebar() {
 	$("#sidePanel").css("left","-210px");
 	$("#mailPanel").css("margin-left","40px");
 	sideBarOpen=false;
+	
+	$("#toggleSidebar").css("border-radius","0 0 5px 5px");
+	
+	$("#toggleSidebar").css("-webkit-transform","rotate(90deg)");
+	$("#toggleSidebar").css("-ms-transform","rotate(90deg)");
+	$("#toggleSidebar").css("transform","rotate(90deg)");
 }
 
 $(document).ready(function() {
@@ -263,8 +275,12 @@ $(document).ready(function() {
 	current.attr("onclick","closeSidebar()");
 	
 	$("#toggleSidebar").click(function(e) {
-		if(sideBarOpen) closeSidebar();
-		else openSidebar();
+		if(sideBarOpen) {
+			closeSidebar();
+		}
+		else {
+			openSidebar();
+		}
 		e.stopPropagation();
 	})
 })

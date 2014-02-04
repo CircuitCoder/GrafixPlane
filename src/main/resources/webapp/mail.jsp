@@ -167,6 +167,34 @@ public void jspInit() {
 			border-left:#777 10px solid;
 			background-color:#F9F9F9;
 		}
+		
+		#toggleSidebar {
+			box-sizing: border-box;
+			height:20px;
+			width:40px;
+			padding-top:4px;
+		
+			position: absolute;
+			bottom:15px;
+			left:220px;
+			
+			display:block;
+			font-size:20px;
+			font-weight: bold;
+			
+			border: #444 1px solid;
+			background: #EEE;
+			border-radius: 5px 5px 0 0;
+			
+			color:black;
+			text-align:center;
+			text-shadow: black 0 -5px 0px;
+			
+			-webkit-transform: rotate(270deg);
+			-ms-transform: rotate(270deg);
+			transform: rotate(270deg);
+			cursor: pointer;
+		}
 		</style>
 	</head>
 	
@@ -187,15 +215,15 @@ public void jspInit() {
 	
 	<body class="mailBody">
 		<div id="sidePanel" current="<%=t==null?"inbox":t%>">
-			<div class="sideSlot" id="entry_inbox" onclick="switchType('')">Inbox</div>
-			<div class="sideSlot" id="entry_unread" onclick="switchType('unread')">Unread</div>
-			<div class="sideSlot" id="entry_flagged" onclick="switchType('flagged')">Flag</div>
-			<div class="sideSlot" id="entry_deleted" onclick="switchType('deleted')">Trash</div>
+			<div class="sideSlot" id="entry_inbox" onclick="switchType('')"><%=bundle.getString("mail.entry.inbox") %></div>
+			<div class="sideSlot" id="entry_unread" onclick="switchType('unread')"><%=bundle.getString("mail.entry.unread") %></div>
+			<div class="sideSlot" id="entry_flagged" onclick="switchType('flagged')"><%=bundle.getString("mail.entry.flagged") %></div>
+			<div class="sideSlot" id="entry_deleted" onclick="switchType('deleted')"><%=bundle.getString("mail.entry.deleted") %></div>
+			<span id="toggleSidebar">^</span>
 		</div>
 		<div id="mailPanel">
 			<div id="mailCtrl">
 				<div class="g_checkbox" id="checkAll"></div>
-				<button class="g_button" id="toggleSidebar">Sidebar</button>
 				<button class="g_button" id="openSend"><%=bundle.getString("mail.ctrl.new")%></button>
 				<%= (t!=null&&t.equals("deleted"))?
 						"<button class=\"g_button requireSelect\" id=\"delAll\" onclick=\"delAll()\">"+bundle.getString("mail.ctrl.undelall")+"</button>":
