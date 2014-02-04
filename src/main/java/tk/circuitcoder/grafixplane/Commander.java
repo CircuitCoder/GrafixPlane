@@ -47,10 +47,8 @@ public class Commander {
 						getGP().getLogger().info("Added!");
 					else getGP().getLogger().info("Failed!");
 				}
-				else if(args[0].toLowerCase().equals("stop")) {
-					getGP().shutdown();
-					System.exit(0);
-				}
+				else if(args[0].toLowerCase().equals("stop"))
+					stop();
 				else if(args[0].toLowerCase().equals("userauth"))
 					getGP().getLogger().info(String.valueOf(User.verify(args[1], args[2])));
 				else
@@ -63,7 +61,7 @@ public class Commander {
 		}
 		//Ctrl-D!
 		getGP().getLogger().info("EOF detected");
-		getGP().shutdown();
+		stop();
 		System.exit(0);
 	}
 	

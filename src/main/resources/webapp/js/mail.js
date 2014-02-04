@@ -3,10 +3,11 @@ var checkCount=0;
 
 function sendMail() {
 	if(!checkEmpty()) return;
+	var btn=$(".msend");
 	
-	$(".msend").css("color","#AAA");
-	$(".msend").html("Sending...");
-	$(".msend").attr("onclick","");
+	btn.css("color","#AAA");
+	btn.html("Sending...");
+	btn.attr("onclick","");
 	var xhr=$.ajax({
 		type: "POST",
 		url:"/mail",
@@ -19,23 +20,23 @@ function sendMail() {
 			subject: $(".msubject").val()
 		}
 	}).done(function(data) {
-		$(".msend").css("color","inhert")
-		$(".msend").attr("onclick","sendMail();");
+		btn.css("color","inhert")
+		btn.attr("onclick","sendMail();");
 		if(data!="0") {
-			$(".msend").html("Sent!");
+			btn.html(SENTSUC);
 			$("#mailSend").fadeOut(500,function() {
 				$(".mto").val("");
 				$(".mcontent").val(""),
 				$(".msubject").val("");
-				$(".msend").html("Send");
+				$(".msend").html(SENTORI);
 			});
 		}
-		else $(".msent").html("Failed!");
+		else btn.html(SENTFAIL);
 	}).fail(function() {
-		$(".msend").css("color","inhert");
-		$(".msend").html("Send");
-		$(".msend").attr("onclick","sendMail();");
-		alert("Request failed!");
+		btn.css("color","inhert");
+		btn.html(SENTORI);
+		btn.attr("onclick","sendMail();");
+		alert(REQFAIL);
 	})
 }
 
@@ -46,7 +47,7 @@ function getMail(index) {
 	req.send("action=read" +
 			"&index="+index);
 	var resp=req.responseText;
-	if(resp==",ERROR") alert("Error occurred!");
+	if(resp==",ERROR") alert(REQERR);
 	else {
 		var data=new Array();
 		data=resp.split(",");
@@ -101,11 +102,11 @@ function del(index) {
 			if(checked==checkCount&&checkCount!=0) $("#checkAll").addClass("g_checked");
 			if(checkCount==0) $("#checkAll").removeClass("g_checked");
 		});
-		else $("#MT"+index+" .delBtn").val("Failed!");
+		else $("#MT"+index+" .delBtn").val(DELFAIL);
 	}).fail(function() {
 		$("#MT"+index+" .delBtn").css("color","inhert");
 		$("#MT"+index+" .delBtn").val(ori);
-		alert("Request failed!");
+		alert(REQFAIL);
 	})
 }
 
@@ -131,11 +132,11 @@ function rm(index) {
 			if(checked==checkCount&&checkCount!=0) $("#checkAll").addClass("g_checked");
 			if(checkCount==0) $("#checkAll").removeClass("g_checked");
 		});
-		else $("#MT"+index+" .rmBtn").val("Failed!");
+		else $("#MT"+index+" .rmBtn").val(RMFAIL);
 	}).fail(function() {
 		$("#MT"+index+" .rmBtn").css("color","inhert");
 		$("#MT"+index+" .rmBtn").val(ori);
-		alert("Request failed!");
+		alert(REQFAIL);
 	})
 }
 
@@ -157,7 +158,7 @@ function flag(index) {
 	}).fail(function() {
 		$("#MT"+index+" > .flagBtn").css("color","inhert");
 		$("#MT"+index+" > .flagBtn").val(ori);
-		alert("Request failed!");
+		alert(REQFAIL);
 	})
 }
 

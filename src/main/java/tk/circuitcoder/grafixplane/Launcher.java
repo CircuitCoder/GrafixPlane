@@ -27,6 +27,9 @@ public class Launcher {
 		parser.acceptsAll(Arrays.asList("r","root"),"Password for the root user")
 			.withRequiredArg()
 			.ofType(String.class);
+		parser.acceptsAll(Arrays.asList("l","locale"), "The locale used to get translation")
+			.withRequiredArg()
+			.ofType(String.class);
 		parser.acceptsAll(Arrays.asList("d","database"),"The name of the database to use")
 			.withRequiredArg()
 			.defaultsTo(new String[]{"GrafixPlane"})

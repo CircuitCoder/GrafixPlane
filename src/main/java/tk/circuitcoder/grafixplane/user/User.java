@@ -69,7 +69,7 @@ public class User {
 		} catch (NameExistsException e) {
 			//This shouldn't happen
 			e.printStackTrace();
-			GrafixPlane.stop();
+			GrafixPlane.errorStop();
 			return false;
 		}
 	}
@@ -337,7 +337,7 @@ public class User {
 		} catch (UIDExistsException e) {
 			//NOT POSSIBLE
 			e.printStackTrace();
-			GrafixPlane.stop();
+			GrafixPlane.errorStop();
 			return null;
 		}
 	}

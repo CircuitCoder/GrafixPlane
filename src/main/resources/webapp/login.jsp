@@ -1,5 +1,14 @@
 <!DOCTYPE html>
 <%@page import="tk.circuitcoder.grafixplane.user.User"%>
+<%@page import="tk.circuitcoder.grafixplane.GrafixPlane"%>
+<%@page import="java.util.ResourceBundle" %>
+<%!
+ResourceBundle bundle;
+
+public void jspInit() {
+	bundle=GrafixPlane.getGP().getTranslation();
+}
+%>
 <html>
 	<head>
 		<link rel="stylesheet" type="text/css" href="/styles/default.css" />
@@ -22,16 +31,16 @@
 		%>
 		
 		<div style="text-align:center;">
-			<input id="uname" type="text" class="g_input empty_input non_empty" empty_value="Username" style="font-size: 1.25em"/><br/>
-			<input id="passwd" type="text" class="g_input empty_input non_empty" empty_value="Password" style="font-size: 1.25em"/><br/>
-			<input name="submit" type="submit" value="Login" class="g_button main_button" style="font-size: 1.25em" onclick="login()"/>
+			<input id="uname" type="text" class="g_input empty_input non_empty" empty_value="<%=bundle.getString("user.uname")%>" style="font-size: 1.25em"/><br/>
+			<input id="passwd" type="text" class="g_input empty_input non_empty" empty_value="<%=bundle.getString("user.passwd") %>" style="font-size: 1.25em"/><br/>
+			<input name="submit" type="submit" value="<%=bundle.getString("user.login")%>" class="g_button main_button" style="font-size: 1.25em" onclick="login()"/>
 		</div>
 	
 		<%
 		} else {
 		%>
 		<h2>Hello, <%=User.getCurrentUser(request.getSession()).getUsername() %></h2>
-		<a href="/auth?action=logout" class="g_button main_button">Logout</a>
+		<a href="/auth?action=logout" class="g_button main_button"><%=bundle.getString("user.logout")%></a>
 		<%
 		}
 		%>

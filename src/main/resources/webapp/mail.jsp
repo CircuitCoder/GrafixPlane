@@ -4,6 +4,15 @@
 <%@page import="java.util.ArrayList" %>
 <%@page import="java.util.Date" %>
 <%@page import="java.text.SimpleDateFormat" %>
+<%@page import="tk.circuitcoder.grafixplane.GrafixPlane"%>
+<%@page import="java.util.ResourceBundle" %>
+<%!
+ResourceBundle bundle;
+
+public void jspInit() {
+	bundle=GrafixPlane.getGP().getTranslation();
+}
+%>
 <!DOCTYPE html>
 <html>
 	<head>
@@ -13,6 +22,19 @@
 		<link rel="stylesheet" type="text/css" href="/styles/default.css" />
 		<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 		<title>Mailbox</title>
+		<!-- constants -->
+		<script>
+		var SENDING="<%=bundle.getString("mail.send.sending")%>";
+		var SENTORI="<%=bundle.getString("mail.send.send")%>";
+		var SENTSUC="<%=bundle.getString("mail.send.sent")%>";
+		var SENTFAIL="<%=bundle.getString("mail.send.fail")%>";
+		
+		var DELFAIL="<%=bundle.getString("mail.ctrl.del.fail")%>";
+		var RMFAIL="<%=bundle.getString("mail.ctrl.rm.fail")%>";
+		
+		var REQFAIL="<%=bundle.getString("reqfail")%>";
+		var REQERR="<%=bundle.getString("reqerr")%>";
+		</script>
 		<script src="/js/jquery.js" type="text/javascript"></script>
 		<script src="/js/mail.js" type="text/javascript"></script>
 		<script src="/js/util.js" type="text/javascript"></script>
@@ -126,11 +148,11 @@
 		<div class="mailPanel">
 			<div id="mailCtrl">
 				<div class="g_checkbox" id="checkAll"></div>
-				<button class="g_button" id="openSend">New</button>
+				<button class="g_button" id="openSend"><%=bundle.getString("mail.ctrl.new")%></button>
 				<%= (t!=null&&t.equals("deleted"))?
-						"<button class=\"g_button requireSelect\" id=\"delAll\" onclick=\"delAll()\">Undelete</button>":
-						"<button class=\"g_button requireSelect\" id=\"delAll\" onclick=\"delAll()\">Delete</button>"%>
-				<button class="g_button requireSelect" id="rmAll" onclick="rmAll()">Remove</button> 
+						"<button class=\"g_button requireSelect\" id=\"delAll\" onclick=\"delAll()\">"+bundle.getString("mail.ctrl.undelall")+"</button>":
+						"<button class=\"g_button requireSelect\" id=\"delAll\" onclick=\"delAll()\">"+bundle.getString("mail.ctrl.delall")+"</button>"%>
+				<button class="g_button requireSelect" id="rmAll" onclick="rmAll()">"+bundle.getString("mail.ctrl.rmall")+"</button> 
 			</div>
 			<%
 			String colorStr,tColorStr;
@@ -156,10 +178,10 @@
 					<div class="g_checkbox"></div>
 					<%=m.flagged()?"<div class=\"g_flag g_flagged\"></div>":"<div class=\"g_flag\"></div>"%>
 					<%=m.getMail().subject%>
-					<span mid=<%=m.getMID()%> class="g_button m_button rmBtn"><span class="icon" style="background-image:url('/icons/mail.png'); background-position: -144px 0px;"></span>Remove</span>
+					<span mid=<%=m.getMID()%> class="g_button m_button rmBtn"><span class="icon" style="background-image:url('/icons/mail.png'); background-position: -144px 0px;"></span><%=bundle.getString("mail.ctrl.rm")%></span>
 					<span mid=<%=m.getMID()%> class="g_button m_button delBtn"><%=m.deleted()?
-						"<span class=\"icon\" style=\"background-image:url('/icons/mail.png'); background-position: -80px 0px;\"></span>Undelete":
-						"<span class=\"icon\" style=\"background-image:url('/icons/mail.png'); background-position: -64px 0px;\"></span>Delete"%></span>
+						"<span class=\"icon\" style=\"background-image:url('/icons/mail.png'); background-position: -80px 0px;\"></span>"+bundle.getString("mail.ctrl.undel"):
+						"<span class=\"icon\" style=\"background-image:url('/icons/mail.png'); background-position: -64px 0px;\"></span>"+bundle.getString("mail.ctrl.del")%></span>
 					<span class="mailSentTime"><%=titleTime.format(d)%></span>
 		
 				</div>
@@ -175,11 +197,11 @@
 		
 		<div id="mailSend">
 			<div id="mailSendPane">
-				<input class="g_input empty_input msubject non_empty" empty_value="Subject" type="text"/><br/>
-				<input class="g_input empty_input mto non_empty" empty_value="Receivers" type="text"/><br/>
-				<textarea class="g_input empty_input mcontent non_empty" empty_value="Content"/></textarea><br/>
-				<button class="g_button main_button msend" onclick="sendMail();">Send</button>
-				<button class="g_button mclose" onclick="$('#mailSend').fadeOut(500);">Close</button>
+				<input class="g_input empty_input msubject non_empty" empty_value="<%=bundle.getString("mail.send.subject")%>" type="text"/><br/>
+				<input class="g_input empty_input mto non_empty" empty_value="<%=bundle.getString("mail.send.recs")%>" type="text"/><br/>
+				<textarea class="g_input empty_input mcontent non_empty" empty_value="<%=bundle.getString("mail.send.cont")%>"/></textarea><br/>
+				<button class="g_button main_button msend" onclick="sendMail();"><%=bundle.getString("mail.send.send")%></button>
+				<button class="g_button mclose" onclick="$('#mailSend').fadeOut(500);"><%=bundle.getString("mail.send.close")%></button>
 			</div>
 		</div>
 	</body>

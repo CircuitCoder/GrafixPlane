@@ -7,7 +7,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.Locale;
 import java.util.Random;
+import java.util.ResourceBundle;
 
 import javax.servlet.DispatcherType;
 
@@ -55,6 +57,8 @@ public class GrafixPlane {
 	private boolean debug;
 	private Config config;
 	private Connection conn;
+	private Locale locale;
+	private ResourceBundle bundle;
 	
 	/**
 	 * Static Method. Creates a new GrafixPlane instance and start it
@@ -73,9 +77,17 @@ public class GrafixPlane {
 	}
 	
 	/**
-	 * Emergency stop
+	 * Shutdown the internal GrafixPlane instance, and stop the virtual machine
 	 */
 	public static void stop() {
+		instance.shutdown();
+		System.exit(0);
+	}
+	
+	/**
+	 * Emergency stop
+	 */
+	public static void errorStop() {
 		instance.logger.info("Some serious happened...");
 		instance.shutdown();
 		System.exit(-1);
@@ -87,6 +99,8 @@ public class GrafixPlane {
 	 * <ol>
 	 * <li>Configures the Logger</li>
 	 * <li>Verifies the database and creates essential slots</li>
+	 * <li>Updates root user's password</li>
+	 * <li>Set up locale for this instance</li>
 	 * <li>Configures the Jetty web server and starts+joins it</li>
 	 * </ol>
 	 * @param options Options from the {@link Launcher}
@@ -194,6 +208,18 @@ public class GrafixPlane {
 			User.newUser(0,"GAdmin", passwdStr, AccessLevel.ROOT);
 		}
 		
+		if(options.has("l")) {
+			String lang[]=((String) options.valueOf("l")).split("_");
+			if(lang.length==1) locale=new Locale(lang[0]);
+			else if(lang.length==2) locale=new Locale(lang[0],lang[1]);
+			else locale=new Locale(lang[0],lang[1],lang[2]);
+		}
+		else locale=Locale.getDefault();
+		Locale.setDefault(locale);
+		this.logger.info("Using locale: "+locale.toString());
+		
+		bundle=ResourceBundle.getBundle("locales/GrafixPlane",locale);
+		
 		this.logger.info("Starting WebServer on port "+port);
 		webserver.start();
 		
@@ -201,7 +227,7 @@ public class GrafixPlane {
 		cmd.startLoop();
 	}
 	
-	public void shutdown() {
+	private void shutdown() {
 		logger.info("Shuting down GrafixPlane...");
 		onExit();
 		return;
@@ -247,6 +273,22 @@ public class GrafixPlane {
 	 */
 	public boolean isDebug() {
 		return debug;
+	}
+	
+	/**
+	 * Get locale for this GrafixPlane instance
+	 * @return The locale of this instance
+	 */
+	public Locale getLocale() {
+		return locale;
+	}
+	
+	/**
+	 * Get the locale-specific ResourceBundle  of the translation file
+	 * @return The ResourceBundle object
+	 */
+	public ResourceBundle getTranslation() {
+		return bundle;
 	}
 	
 	/**
