@@ -173,7 +173,7 @@ function delAll() {
 					if(checkCount==0) $("#checkAll").removeClass("g_checked");
 				});
 			}
-			else rows[i].css("background-color","#FEE");
+			else rows[i].parent().css("background-color","#FEE");
 		}
 	}).fail(function(data) {
 		alert(REQFAIL);
@@ -210,7 +210,67 @@ function rmAll() {
 					if(checkCount==0) $("#checkAll").removeClass("g_checked");
 				});
 			}
-			else rows[i].css("background-color","#FEE");
+			else rows[i].parent().css("background-color","#FEE");
+		}
+	}).fail(function(data) {
+		alert(REQFAIL);
+	})
+}
+
+function unreadAll() {
+	var slots=new String();
+	var rows=new Array()
+	$('.g_checkbox.g_checked').each(function() {
+		if($(this).attr("id")=="checkAll"||$(this).parent().hasClass("unreadTitle")) return;
+		slots=slots.concat($(this).parent().attr("id").substring(2)+"|");
+		rows.push($(this));
+	})
+	
+	var xhr=$.ajax({
+		type: "POST",
+		url:"/mail",
+		async: false,
+		dataType: "text",
+		data: {
+			action: 'toggleread',
+			index: slots.substr(0,slots.length-1)
+		}
+	}).always(function(data) {
+		for(var i=0;i<data.length;i++) {
+			if(data.charAt(i)=='0'){
+				rows[i].parent().addClass("unreadTitle");
+			}
+			else rows[i].parent().css("background-color","#FEE");
+		}
+	}).fail(function(data) {
+		alert(REQFAIL);
+	})
+}
+
+function readAll() {
+	var slots=new String();
+	var rows=new Array()
+	$('.g_checkbox.g_checked').each(function() {
+		if($(this).attr("id")=="checkAll"||!$(this).parent().hasClass("unreadTitle")) return;
+		slots=slots.concat($(this).parent().attr("id").substring(2)+"|");
+		rows.push($(this));
+	})
+	
+	var xhr=$.ajax({
+		type: "POST",
+		url:"/mail",
+		async: false,
+		dataType: "text",
+		data: {
+			action: 'toggleread',
+			index: slots.substr(0,slots.length-1)
+		}
+	}).always(function(data) {
+		for(var i=0;i<data.length;i++) {
+			if(data.charAt(i)=='0'){
+				rows[i].parent().removeClass("unreadTitle");
+			}
+			else rows[i].parent().css("background-color","#FEE");
 		}
 	}).fail(function(data) {
 		alert(REQFAIL);

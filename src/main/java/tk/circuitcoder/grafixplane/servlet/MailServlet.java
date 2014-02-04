@@ -12,7 +12,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import tk.circuitcoder.grafixplane.GrafixPlane;
 import tk.circuitcoder.grafixplane.mail.Mail;
-import tk.circuitcoder.grafixplane.mail.Mailbox.WrappedMail;
 import tk.circuitcoder.grafixplane.user.User;
 
 public class MailServlet extends HttpServlet {
@@ -68,9 +67,18 @@ public class MailServlet extends HttpServlet {
 				resp.getWriter().print(0);
 			}
 		} else if(action.equals("toggleread")) {
-			int index=Integer.parseInt(req.getParameter("index"));
-			WrappedMail m=User.getCurrentUser(req.getSession()).getMManager().getByID(index);
-			if(m.unread()) m.toggleUnread();
+			StringBuilder result=new StringBuilder();
+			String indexs[]=req.getParameter("index").split("\\|");
+			for(int i=0;i<indexs.length;i++) {
+				try {
+					User.getCurrentUser(req.getSession()).getMManager()
+							.toggleUnread(Integer.parseInt(indexs[i]));
+					result.append(0);
+				} catch(NumberFormatException e) {
+					result.append(1);
+				}
+			}
+			resp.getWriter().print(result);
 		} else if(action.equals("toggledel")) {
 			StringBuilder result=new StringBuilder();
 			String indexs[]=req.getParameter("index").split("\\|");

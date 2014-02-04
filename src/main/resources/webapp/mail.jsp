@@ -229,6 +229,8 @@ public void jspInit() {
 						"<button class=\"g_button requireSelect\" id=\"delAll\" onclick=\"delAll()\">"+bundle.getString("mail.ctrl.undelall")+"</button>":
 						"<button class=\"g_button requireSelect\" id=\"delAll\" onclick=\"delAll()\">"+bundle.getString("mail.ctrl.delall")+"</button>"%>
 				<button class="g_button requireSelect" id="rmAll" onclick="rmAll()"><%=bundle.getString("mail.ctrl.rmall")%></button> 
+				<button class="g_button requireSelect" id="readAll" onclick="readAll()"><%=bundle.getString("mail.ctrl.readall")%></button> 
+				<button class="g_button requireSelect" id="unreadAll" onclick="unreadAll()"><%=bundle.getString("mail.ctrl.unreadall")%></button> 
 			</div>
 			<%
 			String colorStr,tColorStr;
