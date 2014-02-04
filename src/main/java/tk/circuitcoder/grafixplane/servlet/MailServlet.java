@@ -3,8 +3,6 @@ package tk.circuitcoder.grafixplane.servlet;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashSet;
-import java.util.Iterator;
-
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -73,10 +71,15 @@ public class MailServlet extends HttpServlet {
 			WrappedMail m=User.getCurrentUser(req.getSession()).getMManager().getByID(index);
 			if(m.unread()) m.toggleUnread();
 		} else if(action.equals("toggledel")) {
-			int index=Integer.parseInt(req.getParameter("index"));
-			boolean b=User.getCurrentUser(req.getSession()).getMManager().toggleDel(index);
-			if(b) resp.getWriter().print(0);
-			else resp.getWriter().print(1);
+			StringBuilder result=new StringBuilder();
+			String indexs[]=req.getParameter("index").split("\\|");
+			for(int i=0;i<indexs.length;i++) {
+				if(User.getCurrentUser(req.getSession()).getMManager()
+						.toggleDel(Integer.parseInt(indexs[i])))
+					result.append(0);
+				else result.append(1);
+			}
+			resp.getWriter().print(result);
 		} else if(action.equals("toggleflag")) {
 			int index=Integer.parseInt(req.getParameter("index"));
 			boolean b=User.getCurrentUser(req.getSession()).getMManager().toggleFlag(index);
