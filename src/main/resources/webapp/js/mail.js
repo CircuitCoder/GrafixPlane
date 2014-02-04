@@ -1,5 +1,6 @@
 var checked=0;
 var checkCount=0;
+var sideBarOpen=false;
 
 function sendMail() {
 	if(!checkEmpty()) return;
@@ -176,6 +177,24 @@ function rmAll() {
 	})
 }
 
+function switchType(type) {
+	//TODO: do not refreash the page
+	if(type=='') window.location.href = "/mail";
+	else window.location.href="/mail?type="+type;
+}
+
+function openSidebar() {
+	$("#sidePanel").css("left","0");
+	$("#mailPanel").css("margin-left","300px");
+	sideBarOpen=true;
+}
+
+function closeSidebar() {
+	$("#sidePanel").css("left","-250px");
+	$("#mailPanel").css("margin-left","50px");
+	sideBarOpen=false;
+}
+
 $(document).ready(function() {
 	$(".delBtn").each(function() {
 		var mid=$(this).attr("mid");
@@ -245,5 +264,16 @@ $(document).ready(function() {
 	
 	$('#openSend').click(function(e) {
 		$('#mailSend').fadeIn(500);
+	})
+	
+	var currentType=$("#sidePanel").attr("current");
+	var current=$("#entry_"+currentType);
+	current.addClass("entry_current");
+	current.attr("onclick","closeSidebar()");
+	
+	$("#toggleSidebar").click(function(e) {
+		if(sideBarOpen) closeSidebar();
+		else openSidebar();
+		e.stopPropagation();
 	})
 })

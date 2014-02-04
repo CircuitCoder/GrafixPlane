@@ -43,6 +43,7 @@ public void jspInit() {
 			float:right;
 			margin-right: 5px;
 			color: #777;
+			font-weight:normal;
 		}
 		
 		.mto {
@@ -77,6 +78,7 @@ public void jspInit() {
 			float: right;
 			padding:3px 5px 3px 5px;
 			cursor:pointer;
+			font-weight:normal;
 		}
 		
 		.msender {
@@ -94,6 +96,7 @@ public void jspInit() {
 		}
 		
 		.mcont {
+			margin-top: 10px;
 			padding-left: 20px;
 			white-space: pre;
 		}
@@ -129,6 +132,29 @@ public void jspInit() {
 			border-radius:10px;
 			border: #AAA 3px solid;
 		}
+		
+		#mailPanel {
+			margin-left:50px;
+			transition: margin-left 0.5s;
+		}
+		
+		#sidePanel {
+			box-sizing:border-box;
+		
+			background-color:white;
+			font-size: 30px;
+			position: fixed;
+			top:0;
+			left:-250px;
+			width:300px;
+			border-right: #777 3px;
+			transition: left 0.5s;
+		}
+		
+		.sideSlot {
+			height:50px;
+			border-bottom:#777 1px dotted;
+		}
 		</style>
 	</head>
 	
@@ -148,9 +174,16 @@ public void jspInit() {
 	%>
 	
 	<body class="mailBody">
-		<div class="mailPanel">
+		<div id="sidePanel" current="<%=t==null?"inbox":t%>">
+			<div class="sideSlot" id="entry_inbox" onclick="switchType('')">Inbox</div>
+			<div class="sideSlot" id="entry_unread" onclick="switchType('unread')">Unread</div>
+			<div class="sideSlot" id="entry_flag" onclick="switchType('flagged')">Flag</div>
+			<div class="sideSlot" id="entry_deleted" onclick="switchType('deleted')">Trash</div>
+		</div>
+		<div id="mailPanel">
 			<div id="mailCtrl">
 				<div class="g_checkbox" id="checkAll"></div>
+				<button class="g_button" id="toggleSidebar">Sidebar</button>
 				<button class="g_button" id="openSend"><%=bundle.getString("mail.ctrl.new")%></button>
 				<%= (t!=null&&t.equals("deleted"))?
 						"<button class=\"g_button requireSelect\" id=\"delAll\" onclick=\"delAll()\">"+bundle.getString("mail.ctrl.undelall")+"</button>":
@@ -197,7 +230,7 @@ public void jspInit() {
 			</div>
 			<%} %>
 		</div>
-		
+	
 		<div id="mailSend">
 			<div id="mailSendPane">
 				<input class="g_input empty_input msubject non_empty" empty_value="<%=bundle.getString("mail.send.subject")%>" type="text"/><br/>
