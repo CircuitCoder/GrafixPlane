@@ -68,30 +68,10 @@ public class MailServlet extends HttpServlet {
 				e.printStackTrace();
 				resp.getWriter().print(0);
 			}
-		} else if(action.equals("read")) {
+		} else if(action.equals("toggleread")) {
 			int index=Integer.parseInt(req.getParameter("index"));
 			WrappedMail m=User.getCurrentUser(req.getSession()).getMManager().getByID(index);
 			if(m.unread()) m.toggleUnread();
-			
-			Iterator<String> rec;
-			try {
-				rec=User.getNames(m.getMail().receivers).iterator();
-			} catch (SQLException e1) {
-				resp.getWriter().print(",ERROR");
-				e1.printStackTrace();
-				return;
-			}
-			
-			StringBuilder recStr=new StringBuilder(rec.next());
-			
-			while(rec.hasNext()) recStr.append('|').append(rec.next());
-			
-			try {
-				resp.getWriter().print(User.getName(m.getMail().sender)+','+recStr+','+m.getMail().content);
-			} catch (SQLException e) {
-				resp.getWriter().print(",ERROR");
-				e.printStackTrace();
-			}
 		} else if(action.equals("toggledel")) {
 			int index=Integer.parseInt(req.getParameter("index"));
 			boolean b=User.getCurrentUser(req.getSession()).getMManager().toggleDel(index);

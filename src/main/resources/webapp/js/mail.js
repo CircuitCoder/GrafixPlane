@@ -41,44 +41,21 @@ function sendMail() {
 	})
 }
 
-function getMail(index) {
-	req = new XMLHttpRequest();
-	req.open("POST", "/mail", false);
-	req.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-	req.send("action=read" +
-			"&index="+index);
-	var resp=req.responseText;
-	if(resp==",ERROR") alert(REQERR);
-	else {
-		var data=new Array();
-		data=resp.split(",");
-		return data;
-	}
-}
-
-function titleClick(index) {
-	var parent=document.getElementById("M"+index);
-	var cont=$("#MC"+index+" > .mcont");
-	if(parent.getAttribute("status")=="closed") {
-		if(cont.html()=="") {
-			var data=getMail(index);
-			
-			var rec=data[1].split("|");
-			var recStr=new String("To: "+rec[0]);
-			//Add links
-			for(var i=1;i<rec.length;i++) recStr+=", "+rec[i];
-			
-			$("#MC"+index+" > .msender").html(data[0]);
-			$("#MC"+index+" > .mrec").html(recStr);
-			cont.html(data[2]);
+function unread(index) {
+	var xhr=$.ajax({
+		type: "POST",
+		url:"/mail",
+		async: false,
+		dataType: "text",
+		data: {
+			action: 'toggleread',
+			index: index
 		}
-		$("#MC"+index).slideDown(500);
-		parent.setAttribute("status","opened");
-	}
-	else {
-		$("#MC"+index).slideUp(500);
-		parent.setAttribute("status","closed")
-	}
+	}).done(function(data) {
+		var slot=$("#MT"+index);
+		if(slot.hasClass("unreadTitle")) slot.removeClass("unreadTitle");
+		else slot.addClass("unreadTitle");
+	})
 }
 
 function del(index) {
@@ -175,6 +152,20 @@ function rmAll() {
 		if($(this).attr("id")=="checkAll") return;
 		rm($(this).parent().attr("id").substring(2));
 	})
+}
+
+function titleClick(index) {
+	var parent=document.getElementById("M"+index);
+	var cont=$("#MC"+index+" > .mcont");
+	if($("#MT"+index).hasClass("unreadTitle")) unread(index);
+	if(parent.getAttribute("status")=="closed") {
+		$("#MC"+index).slideDown(500);
+		parent.setAttribute("status","opened");
+	}
+	else {
+		$("#MC"+index).slideUp(500);
+		parent.setAttribute("status","closed")
+	}
 }
 
 function switchType(type) {

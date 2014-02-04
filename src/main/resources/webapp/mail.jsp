@@ -6,6 +6,7 @@
 <%@page import="java.text.SimpleDateFormat" %>
 <%@page import="tk.circuitcoder.grafixplane.GrafixPlane"%>
 <%@page import="java.util.ResourceBundle" %>
+<%@page import="java.util.Iterator" %>
 <%!
 ResourceBundle bundle;
 
@@ -91,6 +92,7 @@ public void jspInit() {
 		}
 				
 		.mtime {
+			margin-left:5px
 			font-size:1em;
 			color:#356;
 		}
@@ -220,7 +222,7 @@ public void jspInit() {
 				Date d=m.getMail().getSentDate();
 			%>
 			<div class="mailRow" id="M<%=m.getMID()%>" status="closed">
-				<div class="mailTitle" id="MT<%=m.getMID()%>" onclick="titleClick(<%=m.getMID()%>);" style="border-left: <%=tColorStr%> 10px solid; border-top: <%=tColorStr%> 5px solid;">
+				<div class="mailTitle<%=m.unread()?" unreadTitle":"" %>" id="MT<%=m.getMID()%>" onclick="titleClick(<%=m.getMID()%>);" style="border-left: <%=tColorStr%> 10px solid; border-top: <%=tColorStr%> 5px solid;">
 					<div class="g_checkbox"></div>
 					<%=m.flagged()?"<div class=\"g_flag g_flagged\"></div>":"<div class=\"g_flag\"></div>"%>
 					<%=m.getMail().subject%>
@@ -231,11 +233,18 @@ public void jspInit() {
 					<span class="mailSentTime"><%=titleTime.format(d)%></span>
 		
 				</div>
+				
+				<%
+				Iterator<String> rec;
+				rec=User.getNames(m.getMail().receivers).iterator();
+				StringBuilder recStr=new StringBuilder(rec.next());
+				while(rec.hasNext()) recStr.append('|').append(rec.next());
+				%>
 				<div class="mailCon" id="MC<%=m.getMID()%>" style="border-left: <%=colorStr%> 10px solid;">
-					<span class="msender"></span>
-					<span class="mrec"></span>
+					<span class="msender"><%=User.getName(m.getMail().sender) %></span>
+					<span class="mrec"><%=bundle.getString("mail.disp.to")+": "+recStr %></span>
 					<span class="mtime"><%=innerTime.format(d)%></span>
-					<div class="mcont"></div>
+					<div class="mcont"><%=m.getMail().content %></div>
 				</div>
 			</div>
 			<%} %>

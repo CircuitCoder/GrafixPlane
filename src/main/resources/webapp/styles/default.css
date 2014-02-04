@@ -150,10 +150,13 @@
 	transition: padding-left 0.5s,background-color 0.5s;;
 	
 	color: #378;
-	font-weight: bold;
 	font-size:24px;
 	
 	background-color: #EEE;
+}
+
+.mailTitle.unreadTitle {
+	font-weight: bold;
 }
 
 .mailRow[status="opened"] > .mailTitle {
