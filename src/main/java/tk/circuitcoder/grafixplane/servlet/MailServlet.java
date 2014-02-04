@@ -3,6 +3,7 @@ package tk.circuitcoder.grafixplane.servlet;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashSet;
+
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -74,10 +75,14 @@ public class MailServlet extends HttpServlet {
 			StringBuilder result=new StringBuilder();
 			String indexs[]=req.getParameter("index").split("\\|");
 			for(int i=0;i<indexs.length;i++) {
-				if(User.getCurrentUser(req.getSession()).getMManager()
-						.toggleDel(Integer.parseInt(indexs[i])))
-					result.append(0);
-				else result.append(1);
+				try {
+					if(User.getCurrentUser(req.getSession()).getMManager()
+							.toggleDel(Integer.parseInt(indexs[i])))
+						result.append(0);
+					else result.append(1);
+				} catch(NumberFormatException e) {
+					result.append(1);
+				}
 			}
 			resp.getWriter().print(result);
 		} else if(action.equals("toggleflag")) {
@@ -86,17 +91,19 @@ public class MailServlet extends HttpServlet {
 			if(b) resp.getWriter().print(0);
 			else resp.getWriter().print(1);
 		} else if(action.equals("remove")) {
-			int index=Integer.parseInt(req.getParameter("index"));
-			boolean b;
-			
-			try {
-				b = User.getCurrentUser(req.getSession()).getMManager().remove(index);
-				if(b) resp.getWriter().print(0);
-				else resp.getWriter().print(1);
-			} catch (SQLException e) {
-				resp.getWriter().print(1);
-				e.printStackTrace();
+			StringBuilder result=new StringBuilder();
+			String indexs[]=req.getParameter("index").split("\\|");
+			for(int i=0;i<indexs.length;i++) {
+				try {
+					if(User.getCurrentUser(req.getSession()).getMManager()
+							.remove(Integer.parseInt(indexs[i])))
+						result.append(0);
+					else result.append(1);
+				} catch (NumberFormatException | SQLException e) {
+					result.append(1);
+				}
 			}
+			resp.getWriter().print(result);
 		}
 	}
 }

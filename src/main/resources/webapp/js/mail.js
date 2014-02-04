@@ -26,9 +26,12 @@ function sendMail() {
 		if(data!="0") {
 			btn.html(SENTSUC);
 			$("#mailSend").fadeOut(500,function() {
-				$(".mto").val("");
-				$(".mcontent").val(""),
-				$(".msubject").val("");
+				$(".mto").val($(".mto").attr("empty_value"));
+				$(".mto").addClass("empty_imput");
+				$(".mcontent").val($(".mcontent").attr("empty_value"));
+				$(".mcontent").addClass("empty_imput");
+				$(".msubject").val($(".msubject").attr("empty_value"));
+				$(".msubject").addClass("empty_imput");
 				$(".msend").html(SENTORI);
 			});
 		}
@@ -162,9 +165,9 @@ function delAll() {
 		for(var i=0;i<data.length;i++) {
 			if(data.charAt(i)=='0'){
 				rows[i].parent().parent().fadeOut(500,function() {
-					if(rows[i].hasClass("g_checked"))
+					if($("#"+$(this).attr("id")+" .g_checkbox").hasClass("g_checked"))
 						if((--checked)==0) $(".requireSelect").hide();
-					$("#M"+index).remove();
+					$(this).remove();
 					--checkCount;
 					if(checked==checkCount&&checkCount!=0) $("#checkAll").addClass("g_checked");
 					if(checkCount==0) $("#checkAll").removeClass("g_checked");
@@ -178,9 +181,39 @@ function delAll() {
 }
 
 function rmAll() {
+	var slots=new String();
+	var rows=new Array()
 	$('.g_checkbox.g_checked').each(function() {
 		if($(this).attr("id")=="checkAll") return;
-		rm($(this).parent().attr("id").substring(2));
+		slots=slots.concat($(this).parent().attr("id").substring(2)+"|");
+		rows.push($(this));
+	})
+	
+	var xhr=$.ajax({
+		type: "POST",
+		url:"/mail",
+		async: false,
+		dataType: "text",
+		data: {
+			action: 'remove',
+			index: slots.substr(0,slots.length-1)
+		}
+	}).always(function(data) {
+		for(var i=0;i<data.length;i++) {
+			if(data.charAt(i)=='0'){
+				rows[i].parent().parent().fadeOut(500,function() {
+					if($("#"+$(this).attr("id")+" .g_checkbox").hasClass("g_checked"))
+						if((--checked)==0) $(".requireSelect").hide();
+					$(this).remove();
+					--checkCount;
+					if(checked==checkCount&&checkCount!=0) $("#checkAll").addClass("g_checked");
+					if(checkCount==0) $("#checkAll").removeClass("g_checked");
+				});
+			}
+			else rows[i].css("background-color","#FEE");
+		}
+	}).fail(function(data) {
+		alert(REQFAIL);
 	})
 }
 
