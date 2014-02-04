@@ -134,26 +134,36 @@ public void jspInit() {
 		}
 		
 		#mailPanel {
-			margin-left:50px;
+			margin-left:250px;
 			transition: margin-left 0.5s;
 		}
 		
 		#sidePanel {
 			box-sizing:border-box;
 		
-			background-color:white;
-			font-size: 30px;
+			background-color:#D9D9D9;
+			font-size: 20px;
 			position: fixed;
 			top:0;
-			left:-250px;
-			width:300px;
-			border-right: #777 3px;
+			left:0;
+			width:250px;
+			border-right: #444 1px solid;
 			transition: left 0.5s;
+			height:100%;
 		}
 		
 		.sideSlot {
-			height:50px;
+			height:20px;
 			border-bottom:#777 1px dotted;
+			padding: 10px;
+			background-color: #EEE;
+			border-left:#777 5px solid;
+			font-weight: bold;
+		}
+		
+		.sideSlot.entry_current {
+			border-left:#777 10px solid;
+			background-color:#F9F9F9;
 		}
 		</style>
 	</head>
@@ -177,7 +187,7 @@ public void jspInit() {
 		<div id="sidePanel" current="<%=t==null?"inbox":t%>">
 			<div class="sideSlot" id="entry_inbox" onclick="switchType('')">Inbox</div>
 			<div class="sideSlot" id="entry_unread" onclick="switchType('unread')">Unread</div>
-			<div class="sideSlot" id="entry_flag" onclick="switchType('flagged')">Flag</div>
+			<div class="sideSlot" id="entry_flagged" onclick="switchType('flagged')">Flag</div>
 			<div class="sideSlot" id="entry_deleted" onclick="switchType('deleted')">Trash</div>
 		</div>
 		<div id="mailPanel">

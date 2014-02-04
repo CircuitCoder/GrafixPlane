@@ -1,6 +1,6 @@
 var checked=0;
 var checkCount=0;
-var sideBarOpen=false;
+var sideBarOpen=true;
 
 function sendMail() {
 	if(!checkEmpty()) return;
@@ -185,13 +185,13 @@ function switchType(type) {
 
 function openSidebar() {
 	$("#sidePanel").css("left","0");
-	$("#mailPanel").css("margin-left","300px");
+	$("#mailPanel").css("margin-left","250px");
 	sideBarOpen=true;
 }
 
 function closeSidebar() {
-	$("#sidePanel").css("left","-250px");
-	$("#mailPanel").css("margin-left","50px");
+	$("#sidePanel").css("left","-210px");
+	$("#mailPanel").css("margin-left","40px");
 	sideBarOpen=false;
 }
 

@@ -153,22 +153,21 @@
 	font-weight: bold;
 	font-size:24px;
 	
-	background-color: #DDD;
+	background-color: #EEE;
 }
 
 .mailRow[status="opened"] > .mailTitle {
 	padding-left: 20px;
-	background-color:#EEE;
+	background-color:#F7F7F7;
 }
 
 .mailCon {
-	margin锛�;
 	padding: 10px 50px 20px 10px;
 	
 	/*on init*/
 	display: none;
 	height: auto;
 
-	background: #EEE;
+	background: white;
 	overflow: hidden;
 }
