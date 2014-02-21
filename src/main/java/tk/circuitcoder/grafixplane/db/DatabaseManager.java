@@ -17,11 +17,21 @@ public abstract class DatabaseManager {
 	protected String dbPasswd;
 	
 	/**
+	 * Basic constructor, initialize data fields
+	 */
+	public DatabaseManager() {
+		dbName="GrafixPlane";
+		dbUser="";
+		dbPasswd="";
+	}
+	
+	/**
 	 * Set the default database name. 
 	 * This database will be used to store and load all data by other components of GrafixPlane
 	 * @param name  The default database name
 	 */
 	public void setDefaultDB(String name) {
+		if(name==null) throw new IllegalArgumentException("Null database name");
 		dbName=name;
 	}
 	
@@ -31,6 +41,7 @@ public abstract class DatabaseManager {
 	 * @param user The username
 	 */
 	public void setDBUser(String user) {
+		if(user==null) throw new IllegalArgumentException("Null database user");
 		dbUser=user;
 	}
 	
@@ -40,6 +51,7 @@ public abstract class DatabaseManager {
 	 * @param passwd The password
 	 */
 	public void setDBPasswd(String passwd) {
+		if(passwd==null) throw new IllegalArgumentException("Null database password");
 		dbPasswd=passwd;
 	}
 	

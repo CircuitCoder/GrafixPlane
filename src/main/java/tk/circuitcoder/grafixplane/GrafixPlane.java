@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Connection;
@@ -12,21 +13,23 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.Enumeration;
 import java.util.Locale;
 import java.util.Random;
 import java.util.ResourceBundle;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import javax.servlet.DispatcherType;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import joptsimple.OptionSet;
 
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.HandlerList;
-import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,12 +44,13 @@ import ch.qos.logback.core.filter.AbstractMatcherFilter;
 import ch.qos.logback.core.spi.FilterReply;
 import tk.circuitcoder.grafixplane.db.DatabaseManager;
 import tk.circuitcoder.grafixplane.db.H2DatabaseManager;
-import tk.circuitcoder.grafixplane.filter.ControlFilter;
 import tk.circuitcoder.grafixplane.mail.Mail;
 import tk.circuitcoder.grafixplane.mail.MailManager;
 import tk.circuitcoder.grafixplane.mail.Mailbox;
 import tk.circuitcoder.grafixplane.user.User;
 import tk.circuitcoder.grafixplane.user.User.AccessLevel;
+import tk.circuitcoder.grafixplane.user.User.NameExistsException;
+import tk.circuitcoder.grafixplane.user.User.UIDExistsException;
 /**
  * Represent a GrafixPlane instance, containing all runtime data
  * @author CircuitCoder
@@ -56,6 +60,8 @@ public class GrafixPlane {
 	static final public String VERSION_TEXT="GrafixPlane 0.0.4 SNAPSHOT";
 	static final public long VERSION=4L;
 	static private GrafixPlane instance;
+	
+	static private boolean standalone=false;
 	
 	private Server webserver;
 	private Integer port;
@@ -67,6 +73,112 @@ public class GrafixPlane {
 	private Connection conn;
 	private Locale locale;
 	private ResourceBundle bundle;
+	
+	/**
+	 * <p>When GrafixPlane is running as a webapp, 
+	 * this servlet will be load on startup and initializes this application. </p>
+	 * <p>Also provides server-wide information
+	 * @author CircuitCoder
+	 * @since 0.0.4
+	 */
+	public static class InfoServlet extends HttpServlet {
+		private static final long serialVersionUID = GrafixPlane.VERSION;
+		@Override
+		public void init() {
+			if(standalone) return;
+			instance=new GrafixPlane();
+			instance.logger=LoggerFactory.getLogger(GrafixPlane.class);
+			instance.logger.info("Starting GrafixPlane Instance In Webapp Mode...");
+			instance.logger.info("Version: "+VERSION_TEXT);
+			instance.preInit();
+			
+			try {
+				instance.db=new H2DatabaseManager();
+				String db=getInitParameter("database");
+				String dbu=getInitParameter("database-user");
+				String dbp=getInitParameter("database-passwd");
+				if(db!=null) instance.db.setDefaultDB(db);
+				if(dbu!=null) instance.db.setDBUser(dbu);
+				if(dbp!=null) instance.db.setDBPasswd(dbp);
+				instance.db.startDB(9750);
+				try {
+					instance.conn=instance.db.getConn();
+				} catch (SQLException ex) {
+					//Create the Database
+					instance.conn=instance.db.getConn("", "", "GrafixPlane", false);
+				}
+				
+				//Check if essential tables are exist
+				instance.createTable(instance.conn);
+			} catch(SQLException | ClassNotFoundException e) {
+				instance.logger.error("Failed to initialize database");
+			}
+			
+			if(instance.config==null) instance.config=new Config(instance.conn);
+			
+			if(!instance.postInit(instance.conn)) {
+				instance.logger.error("Post-initializing section fails. Terminated");
+				System.exit(-1);
+			}
+			
+			String passwdStr=(String) getInitParameter("password");
+			if(passwdStr==null) passwdStr="origin";
+			instance.logger.info("Updating admin password: "+passwdStr);
+				try {
+					if(!User.modifyPasswd(0, passwdStr))
+						User.newUser(0,"GAdmin", passwdStr, AccessLevel.ROOT);
+				} catch (SQLException | NameExistsException
+						| UIDExistsException e) {}	//Ignore
+			
+			String localeStr=getInitParameter("locale");
+			if(localeStr!=null) {
+				String lang[]=localeStr.split("_");
+				if(lang.length==1) instance.locale=new Locale(lang[0]);
+				else if(lang.length==2) instance.locale=new Locale(lang[0],lang[1]);
+				else instance.locale=new Locale(lang[0],lang[1],lang[2]);
+			}
+			else instance.locale=Locale.getDefault();
+			Locale.setDefault(instance.locale);
+			instance.logger.info("Using locale: "+instance.locale.toString());
+			
+			instance.bundle=ResourceBundle.getBundle("locales/GrafixPlane",instance.locale);
+			
+			instance.postInit(instance.conn);
+		}
+		@Override
+		public void doGet(HttpServletRequest req,HttpServletResponse res) throws IOException {
+			Writer out=res.getWriter();
+			out.write("<!DOCTYPE html><html><head><title>GrafixPlane - info</title></head><body><table width=\"400px\" align=\"center\">");
+			out.write("<tr><td>Standalone</td><td>"+String.valueOf(standalone)+"</td></tr>");
+			out.write("<tr><td>Debug</td><td>"+String.valueOf(instance.debug)+"</td></tr>");
+			out.write("<tr><td>Port</td><td>"+instance.port+"</td></tr>");
+			out.write("<tr><td>Host</td><td>"+instance.host+"</td></tr>");
+			out.write("<tr><td>Locale</td><td>"+instance.locale.toString()+"</td></tr>");
+		}
+		@Override
+		public void doPost(HttpServletRequest req, HttpServletResponse res)
+				throws ServletException, IOException {
+			Writer out=res.getWriter();
+			String field=req.getParameter("field");
+			if(field.equals("standalone")) out.write(standalone?1:0);
+			else if(field.equals("debug")) out.write(instance.debug?1:0);
+			else if(field.equals("started")) out.write(instance.webserver.isStarted()?1:0);
+			else if(field.equals("port")) out.write(instance.port);
+			else if(field.equals("host")) out.write(instance.host);
+			else if(field.equals("locale")) out.write(instance.locale.toString());
+			//TODO: more fields
+		}
+		@Override
+		public String getServletInfo() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+		@Override
+		public void destroy() {
+			// TODO Auto-generated method stub
+			
+		}
+	}
 	
 	/**
 	 * Static Method. Creates a new GrafixPlane instance and start it
@@ -120,6 +232,7 @@ public class GrafixPlane {
 		System.out.print("Version: ");
 		System.out.println(VERSION_TEXT);
 		
+		standalone=true;
 		setupLogger();
 		
 		this.logger=LoggerFactory.getLogger(this.getClass());
@@ -165,7 +278,6 @@ public class GrafixPlane {
 		webappHandler.setServer(webserver);
 		webappHandler.setContextPath("/");
 		webappHandler.setVirtualHosts(new String[] {host});
-		webappHandler.setWelcomeFiles(new String[] {"/login.jsp"});
 		
 		if(options.has("no-extract")) {
 			logger.info("Running in no-extract mode");
@@ -190,12 +302,6 @@ public class GrafixPlane {
 		}
 		webappHandler.setParentLoaderPriority(true);
 		
-		FilterHolder holder=new FilterHolder(new ControlFilter());
-		holder.setInitParameter("baseDir",
-				getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
-		holder.setInitParameter("host", host);
-		webappHandler.addFilter(holder, "/*",EnumSet.of(DispatcherType.REQUEST,DispatcherType.FORWARD));
-		
 		handlers.addHandler(webappHandler);
 		
 //		ContextHandler imapHandler=new ContextHandler();
@@ -206,9 +312,9 @@ public class GrafixPlane {
 		
 		//Now default user & passwd
 		db=new H2DatabaseManager();
-		db.setDefaultDB((String) options.valueOf("d"));
-		db.setDBUser((String) options.valueOf("du"));
-		db.setDBPasswd((String) options.valueOf("dp"));
+		if(options.has("d")) db.setDefaultDB((String) options.valueOf("d"));
+		if(options.has("du")) db.setDBUser((String) options.valueOf("du"));
+		if(options.has("dp")) db.setDBPasswd((String) options.valueOf("dp"));
 		db.startDB(9750);
 		try {
 			conn=db.getConn();

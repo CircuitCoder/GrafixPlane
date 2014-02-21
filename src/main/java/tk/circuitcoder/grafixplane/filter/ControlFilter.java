@@ -20,13 +20,9 @@ import tk.circuitcoder.grafixplane.GrafixPlane;
  * @since 0.0.1
  */
 public class ControlFilter implements Filter {
-	
-	private String host;
 
 	@Override
-	public void init(FilterConfig filterConfig) throws ServletException {
-		host=filterConfig.getInitParameter("host");
-	}
+	public void init(FilterConfig filterConfig) throws ServletException {}
 
 	@Override
 	public void doFilter(ServletRequest request, ServletResponse response,
@@ -42,7 +38,6 @@ public class ControlFilter implements Filter {
 		
 		GrafixPlane.getGP().getLogger().debug("Client "+req.getRemoteAddr()+" requested "+uri);
 		
-		req.setAttribute("g_host", host);
 		req.setAttribute("g_uri", uri);
 		
 		chain.doFilter(request, response);

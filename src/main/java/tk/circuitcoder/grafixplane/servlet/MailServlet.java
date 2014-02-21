@@ -14,6 +14,11 @@ import tk.circuitcoder.grafixplane.GrafixPlane;
 import tk.circuitcoder.grafixplane.mail.Mail;
 import tk.circuitcoder.grafixplane.user.User;
 
+/**
+ * Generates mailbox page & provides mail informations and operations。 Require login 
+ * @author lenovo2012-3a
+ *
+ */
 public class MailServlet extends HttpServlet {
 	private static final long serialVersionUID = GrafixPlane.VERSION;
 

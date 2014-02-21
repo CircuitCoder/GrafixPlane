@@ -7,6 +7,21 @@
 	
 	<display-name>Eschool</display-name>
 	
+	<welcome-file-list>
+		<welcome-file>index.jsp</welcome-file>
+		<welcome-file>login.jsp</welcome-file>
+	</welcome-file-list>
+	
+	<servlet>
+		<servlet-name>InfoServlet</servlet-name>
+		<servlet-class>tk.circuitcoder.grafixplane.GrafixPlane$InfoServlet</servlet-class>
+		<load-on-startup>0</load-on-startup>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>InfoServlet</servlet-name>
+		<url-pattern>/server-info</url-pattern>
+	</servlet-mapping>
+	
 	<servlet>
 		<servlet-name>AuthServlet</servlet-name>
 		<servlet-class>tk.circuitcoder.grafixplane.servlet.AuthServlet</servlet-class>
@@ -35,7 +50,17 @@
 	</servlet-mapping>
 	
 	<listener>
-		<listener-class>tk.circuitcoder.grafixplane.user.User.SessionListener</listener-class>
+		<listener-class>tk.circuitcoder.grafixplane.user.User$SessionListener</listener-class>
 	</listener>
 	
+	<filter>
+		<filter-name>ControlFilter</filter-name>
+ 		<filter-class>tk.circuitcoder.grafixplane.filter.ControlFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>ControlFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+		<dispatcher>REQUEST</dispatcher>
+	</filter-mapping>
+		
 </web-app>
