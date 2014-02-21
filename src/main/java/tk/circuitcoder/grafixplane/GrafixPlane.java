@@ -62,6 +62,7 @@ public class GrafixPlane {
 	static private GrafixPlane instance;
 	
 	static private boolean standalone=false;
+	static private boolean inited=false;
 	
 	private Server webserver;
 	private Integer port;
@@ -85,7 +86,7 @@ public class GrafixPlane {
 		private static final long serialVersionUID = GrafixPlane.VERSION;
 		@Override
 		public void init() {
-			if(standalone) return;
+			if(standalone||inited) return;
 			instance=new GrafixPlane();
 			instance.logger=LoggerFactory.getLogger(GrafixPlane.class);
 			instance.logger.info("Starting GrafixPlane Instance In Webapp Mode...");
@@ -144,6 +145,13 @@ public class GrafixPlane {
 			instance.bundle=ResourceBundle.getBundle("locales/GrafixPlane",instance.locale);
 			
 			instance.postInit(instance.conn);
+			Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+				@Override
+				public void run() {
+					GrafixPlane.instance.onExit();
+				}
+			}));
+			inited=true;
 		}
 		@Override
 		public void doGet(HttpServletRequest req,HttpServletResponse res) throws IOException {
@@ -169,14 +177,8 @@ public class GrafixPlane {
 			//TODO: more fields
 		}
 		@Override
-		public String getServletInfo() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-		@Override
 		public void destroy() {
-			// TODO Auto-generated method stub
-			
+			instance.onExit();
 		}
 	}
 	

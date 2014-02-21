@@ -114,6 +114,25 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-war-plugin</artifactId>
+				<version>2.4</version>
+				<configuration>
+					<warName>GrafixPlane.webapp</warName>
+					<webXml>src/main/resources/webapp/WEB-INF/web.xml</webXml>
+					<warSourceDirectory>src/main/resources/webapp</warSourceDirectory>
+				</configuration>
+				<executions>
+					<execution>
+						<id>create-war</id>
+						<phase>package</phase> <!-- bind to the packaging phase -->
+						<goals>
+							<goal>war</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 
