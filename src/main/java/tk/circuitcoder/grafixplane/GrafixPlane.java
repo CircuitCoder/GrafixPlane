@@ -1,5 +1,11 @@
 package tk.circuitcoder.grafixplane;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -7,10 +13,12 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.Enumeration;
 import java.util.Locale;
 import java.util.Random;
 import java.util.ResourceBundle;
-
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import javax.servlet.DispatcherType;
 
 import joptsimple.OptionSet;
@@ -38,7 +46,7 @@ import tk.circuitcoder.grafixplane.mail.Mail;
 import tk.circuitcoder.grafixplane.mail.MailManager;
 import tk.circuitcoder.grafixplane.mail.Mailbox;
 import tk.circuitcoder.grafixplane.user.User;
-import tk.circuitcoder.grafixplane.user.User.AccessLevel;;
+import tk.circuitcoder.grafixplane.user.User.AccessLevel;
 /**
  * Represent a GrafixPlane instance, containing all runtime data
  * @author CircuitCoder
@@ -157,10 +165,29 @@ public class GrafixPlane {
 		webappHandler.setServer(webserver);
 		webappHandler.setContextPath("/");
 		webappHandler.setVirtualHosts(new String[] {host});
-
 		webappHandler.setWelcomeFiles(new String[] {"/login.jsp"});
-		webappHandler.setResourceBase(this.getClass().getClassLoader().getResource("webapp").toExternalForm());
-		webappHandler.setDescriptor(this.getClass().getClassLoader().getResource("webapp/WEB-INF/web.xml").toExternalForm());
+		
+		if(options.has("no-extract")) {
+			logger.info("Running in no-extract mode");
+			webappHandler.setResourceBase(this.getClass().getClassLoader().getResource("webapp").toExternalForm());
+		}
+		else {
+			String base=(String) options.valueOf("b");
+			File baseFolder=new File(base);
+			if(!baseFolder.exists()) {
+				logger.info("Creating not existed resource base folder...");
+				baseFolder.mkdir();
+			}
+			if(baseFolder.isDirectory()) {
+				if(!extractWebapp(baseFolder)) System.exit(-1);
+			} else {
+				logger.error("Specified resource base is not a folder: "+baseFolder.getAbsolutePath());
+				System.exit(-1);
+			}
+			
+			webappHandler.setResourceBase(base);
+			webappHandler.setDescriptor(baseFolder.getAbsolutePath()+"/WEB-INF/web.xml");
+		}
 		webappHandler.setParentLoaderPriority(true);
 		
 		FilterHolder holder=new FilterHolder(new ControlFilter());
@@ -389,6 +416,73 @@ public class GrafixPlane {
 		rootLogger.addAppender(consoleAppender);
 		rootLogger.addAppender(infoAppender);
 		rootLogger.addAppender(debugAppender);
+	}
+	
+	private boolean extractWebapp(File dest) {
+		logger.info("Extracting files into resource base folder: "+dest.getAbsolutePath()+"...");
+		
+		byte[] buf=new byte[8*1024];
+		JarFile runningJar;
+		try {
+			runningJar=new JarFile(GrafixPlane.class.getProtectionDomain().
+					getCodeSource().getLocation().getPath());
+		} catch (IOException e) {
+			logger.error("Extracting Failed: Unable to load jar file");
+			System.out.println("-----Stack Trace----");
+			e.printStackTrace();
+			return false;
+		}
+		
+		Enumeration<JarEntry> entries=runningJar.entries();
+		String prefix="webapp";
+		URI base=null;
+		try {
+			base=new URI(prefix);
+		} catch (URISyntaxException e1) {
+			logger.error("Internal Error");
+			e1.printStackTrace();
+		}
+		
+		int extractCounter=0;
+		while(entries.hasMoreElements()) {
+			JarEntry entry=entries.nextElement();
+			if(entry.getName().startsWith(prefix)) {
+				try {
+					//TODO: hash
+					URI srcPath=new URI(entry.getName());
+					InputStream is=runningJar.getInputStream(entry);
+					
+					URI diff=base.relativize(srcPath);
+					File destFile=new File(dest,diff.getPath());
+					if(destFile.exists()) {
+						logger.debug(destFile.getAbsolutePath()+" exists. skipped");
+					}
+					else if(srcPath.getPath().endsWith("/")) {
+						logger.debug("Creating Dir: "+destFile.getAbsolutePath());
+						destFile.mkdir();
+					}
+					else {
+						logger.debug("Extracting: "+srcPath+" --> "+destFile.getAbsolutePath());
+						FileOutputStream fos=new FileOutputStream(destFile);
+						int len;
+						while((len=is.read(buf))!=-1) fos.write(buf,0,len);
+						++extractCounter;
+						fos.close();
+					}
+					is.close();
+				} catch (IOException | URISyntaxException e) {
+					logger.error("Extracting Failed: Unable to read resources");
+					System.out.println("-----Stack Trace----");
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		logger.info("Extracting completed, total: "+extractCounter);
+		try {
+			runningJar.close();
+		} catch (IOException e) {} //Ignore
+		return true;
 	}
 	
 	private void createTable(Connection conn) throws SQLException {

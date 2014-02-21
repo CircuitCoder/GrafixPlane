@@ -24,6 +24,11 @@ public class Launcher {
 			.withRequiredArg()
 			.ofType(Integer.class)
 			.defaultsTo(80);
+		parser.acceptsAll(Arrays.asList("b","base","resource-base"), "Resource base for embedded web server, in form of absolute path or relative path, which is base on the current working directory")
+			.withRequiredArg()
+			.ofType(String.class)
+			.defaultsTo("webapp");
+		parser.accepts("no-extract","If this option is selected, GrafixPlane won't extract anything and run as embeded. May reduce efficiency.");
 		parser.acceptsAll(Arrays.asList("r","root"),"Password for the root user")
 			.withRequiredArg()
 			.ofType(String.class);
