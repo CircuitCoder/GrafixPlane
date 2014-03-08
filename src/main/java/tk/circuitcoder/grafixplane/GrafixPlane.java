@@ -594,12 +594,12 @@ public class GrafixPlane {
 	}
 	
 	private void createTable(Connection conn) throws SQLException {
-		//Check if user table are exist
+		Statement stat=conn.createStatement();
+		
 		DatabaseMetaData dbmd=conn.getMetaData();
 		ResultSet tables=dbmd.getTables(null, null, "GRAFIX", new String[]{"TABLE"});
 		if(!tables.first()) {
 			this.logger.info("Creating table GRAFIX");
-			Statement stat=conn.createStatement();
 			stat.execute("CREATE TABLE GRAFIX ("
 					+ "Entry varchar,"
 					+ "Value varchar"
@@ -609,11 +609,9 @@ public class GrafixPlane {
 			config.init(conn, Arrays.asList("mailCount:0","UIDCount:0","BIDCount:1","BoxCapacity:100")); //Initialize the table
 		}
 		
-		
 		tables=dbmd.getTables(null, null, "USER", new String[]{"TABLE"});
 		if(!tables.first()) {
 			this.logger.info("Creating table USER");
-			Statement stat=conn.createStatement();
 			stat.execute("CREATE TABLE USER ("
 					+ "UID int(10) UNSIGNED,"
 					+ "Username varchar,"
@@ -626,7 +624,6 @@ public class GrafixPlane {
 		tables=dbmd.getTables(null, null, "MAIL", new String[]{"TABLE"});
 		if(!tables.first()) {
 			this.logger.info("Creating table MAIL");
-			Statement stat=conn.createStatement();
 			stat.execute("CREATE TABLE MAIL ("
 					+ "MID int(10) UNSIGNED,"
 					+ "Sender int(10) UNSIGNED,"
@@ -643,13 +640,24 @@ public class GrafixPlane {
 		tables=dbmd.getTables(null, null, "MAILBOX", new String[]{"TABLE"});
 		if(!tables.first()) {
 			this.logger.info("Creating table MAILBOX");
-			Statement stat=conn.createStatement();
 			stat.execute("CREATE TABLE MAILBOX ("
 					+ "BID int UNSIGNED,"
 					+ "UID int(10) UNSIGNED,"	//The UID of its owner
 					+ "Mails varchar,"	//Mails, Syntax: ......||MID@Box'Type,status||......
 					+ "BoxCount smallint,"	//The index of this Box
 					+ "MailCount smallint,"	//How many mails are there in this box
+					+ ");");
+
+		}
+		
+		tables=dbmd.getTables(null, null, "FILE", new String[]{"TABLE"});
+		if(!tables.first()) {
+			this.logger.info("Creating table FILE");
+			stat.execute("CREATE TABLE FILE ("
+					+ "FID int UNSIGNED,"
+					+ "Dir varchar,"
+					+ "Owner int,"
+					+ "CTime bigint UNSIGNED"
 					+ ");");
 
 		}
@@ -665,6 +673,7 @@ public class GrafixPlane {
 			User.init(conn);
 			Mailbox.init(conn);
 			MailManager.init(conn);
+			tk.circuitcoder.grafixplane.file.File.init(conn);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
@@ -674,9 +683,10 @@ public class GrafixPlane {
 	
 	private boolean onExit() {
 		try {
+			webserver.stop();
 			User.clear();
 			Mail.clear();
-			webserver.stop();
+			tk.circuitcoder.grafixplane.file.File.clear();
 			config.save(conn);
 			conn.close();
 			db.stopDB();

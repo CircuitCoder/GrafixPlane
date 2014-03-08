@@ -210,8 +210,11 @@ public class User {
 	 */
 	public static boolean verify(String uname,String passwd) {
 		try {
-			userByName.setString(1, uname);
-			ResultSet result=userByName.executeQuery();
+			ResultSet result;
+			synchronized(userByName) {
+				userByName.setString(1, uname);
+				result=userByName.executeQuery();
+			}
 			if(!result.first()) return false;
 			String storedPasswd=result.getString(3);
 			if(storedPasswd==null||!storedPasswd.equalsIgnoreCase(passwd)) return false;
@@ -242,19 +245,24 @@ public class User {
 	 * @throws SQLException If there are some thing wrong with the database
 	 */
 	public static User getUser(String uname,boolean load) throws SQLException {
-		userByName.setString(1, uname);
-		ResultSet resultSet=userByName.executeQuery();
+		ResultSet resultSet;
+		synchronized(userByName) {
+			userByName.setString(1, uname);
+			resultSet=userByName.executeQuery();
+		}
 		if(!resultSet.first()) return null;
 		int UID=resultSet.getInt(1);
-		if(userPool.containsKey(UID)) return userPool.get(UID);
-		else if(!load) return null;
-		
-		User newUser=new User(resultSet.getInt(1),
-				uname,
-				AccessLevel.valueOf(resultSet.getInt(4)),
-				resultSet.getInt(5));
-		userPool.put(UID, newUser);
-		return newUser;
+		synchronized(userPool) {
+			if(userPool.containsKey(UID)) return userPool.get(UID);
+			else if(!load) return null;
+			
+			User newUser=new User(resultSet.getInt(1),
+					uname,
+					AccessLevel.valueOf(resultSet.getInt(4)),
+					resultSet.getInt(5));
+			userPool.put(UID, newUser);
+			return newUser;
+		}
 	}
 	
 	/**
@@ -279,19 +287,24 @@ public class User {
 	 * @throws SQLException If there are some thing wrong with the database
 	 */
 	public static User getUser(int UID,boolean load) throws SQLException {
-		if(userPool.containsKey(UID)) return userPool.get(UID);
-		else if(!load) return null;
+		synchronized(userPool) {
+			if(userPool.containsKey(UID)) return userPool.get(UID);
+			else if(!load) return null;
 		
-		userByID.setInt(1, UID);
-		ResultSet resultSet=userByID.executeQuery();
-		if(!resultSet.first()) return null;
-		
-		User newUser=new User(UID,
-				resultSet.getString(2),
-				AccessLevel.valueOf(resultSet.getInt(4)),
-				resultSet.getInt(5));
-		userPool.put(UID, newUser);
-		return newUser;
+			ResultSet resultSet;
+			synchronized(userByID) {
+				userByID.setInt(1, UID);
+				resultSet=userByID.executeQuery();
+			}
+			if(!resultSet.first()) return null;
+			
+			User newUser=new User(UID,
+					resultSet.getString(2),
+					AccessLevel.valueOf(resultSet.getInt(4)),
+					resultSet.getInt(5));
+			userPool.put(UID, newUser);
+			return newUser;
+		}
 	}
 	
 	/**
@@ -354,20 +367,31 @@ public class User {
 	 * @throws UIDExistsException if this UID already belongs to another user
 	 */
 	public static User newUser(int UID,String name,String passwd,AccessLevel level) throws SQLException, NameExistsException, UIDExistsException {
-		userByName.setString(1,name);
-		if(userByName.executeQuery().first()) throw new NameExistsException();	//A user with same name already exists
-		userByID.setInt(1, UID);
-		if(userByID.executeQuery().first()) throw new UIDExistsException();	//A user with same UID already exists
+		if(userPool.containsValue(UID)) throw new UIDExistsException();
+		synchronized(userByName) {
+			userByName.setString(1,name);
+			if(userByName.executeQuery().first()) throw new NameExistsException();	//A user with same name already exists
+			synchronized(userByID) {
+				userByID.setInt(1, UID);
+				if(userByID.executeQuery().first()) throw new UIDExistsException();	//A user with same UID already exists
+			}
 		
-		newUser.setInt(1,UID);
-		newUser.setString(2, name);
-		newUser.setString(3, passwd);
-		newUser.setInt(4, level.value);
-		newUser.setInt(5, 0);
+			synchronized(newUser) {
+				newUser.setInt(1,UID);
+				newUser.setString(2, name);
+				newUser.setString(3, passwd);
+				newUser.setInt(4, level.value);
+				newUser.setInt(5, 0);
 		
-		newUser.execute();
+				newUser.execute();
+			}
+		}
 		
-		return new User(UID,name,level,0);
+		User result=new User(UID,name,level,0);
+		synchronized(userPool) {
+			userPool.put(UID,result);
+		}
+		return result;
 	}
 	
 	/**
@@ -380,19 +404,29 @@ public class User {
 	 * @throws NameExistsException If this name already belongs to another user,
 	 * @throws SQLException  If there are some thing wrong with the database
 	 */
-	public synchronized static boolean overrideUser(int UID,String name,String passwd,AccessLevel level) throws NameExistsException, SQLException {
-		userByName.setString(1,name);
-		if(userByName.executeQuery().first()) throw new NameExistsException();	//A user with same name already exists
+	public static boolean overrideUser(int UID,String name,String passwd,AccessLevel level) throws NameExistsException, SQLException {
+		synchronized(userPool) {
+			if(userPool.containsKey(UID)) {
+				User target=userPool.get(UID);
+				target.username=name;
+				target.accessLevel=level;
+			}
+		}
 		
-		String sql="UPDATE USER SET ";
-		if(name!=null) sql+=String.format("Username = '%s', ", name);
-		if(passwd!=null) sql+=String.format("Passwd = '%s', ", passwd);
-		if(level!=null) sql+=String.format("AccessLevel = %d, ", level.value);
-		sql=sql.substring(0, sql.length()-2)+String.format(" WHERE UID = %d", UID);
+		synchronized(userByName) {	//override operation changes the name
+			userByName.setString(1,name);
+			if(userByName.executeQuery().first()) throw new NameExistsException();	//A user with same name already exists
+			
+			String sql="UPDATE USER SET ";
+			if(name!=null) sql+=String.format("Username = '%s', ", name);
+			if(passwd!=null) sql+=String.format("Passwd = '%s', ", passwd);
+			if(level!=null) sql+=String.format("AccessLevel = %d, ", level.value);
+			sql=sql.substring(0, sql.length()-2)+String.format(" WHERE UID = %d", UID);
 		
-		if(getGP().getConn().createStatement().executeUpdate(sql)!=1) return false;
-		//TODO: invalidate all sessions that is login as this user
-		return true;
+			if(getGP().getConn().createStatement().executeUpdate(sql)!=1) return false;
+			//TODO: invalidate all sessions that is login as this user
+			return true;
+		}
 	}
 	
 	/**
@@ -424,6 +458,13 @@ public class User {
 	}
 	
 	public static void clear() throws SQLException {
-		for(User u:userPool.values()) u.save();
+		for(User u:userPool.values()) {
+			u.save();
+			userPool.remove(u);
+		}
+		userPool=null;
+		userByID.close();
+		userByName.close();
+		newUser.close();
 	}
 }
