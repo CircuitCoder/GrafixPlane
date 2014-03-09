@@ -2,15 +2,23 @@ package tk.circuitcoder.grafixplane.file;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URI;
+import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
 
+import tk.circuitcoder.grafixplane.GrafixPlane;
 import tk.circuitcoder.grafixplane.user.User;
 
 /**
@@ -27,11 +35,29 @@ public class File {
 	private int ownerId;
 	private User owner;
 	
+	/**
+	 * Users who have permission to access this file
+	 * |UID|UID|UID|.....|UID|
+	 */
+	private String accessilbe;
+	
 	private static PreparedStatement getFile;
 	private static PreparedStatement newFile;
 	private static PreparedStatement delFile;
+	private static PreparedStatement checkFile;
 	private static DateFormat TFormat;
 	private static String contFolder;
+	
+	private static Integer currentID;
+	
+	private File(int ID,String d,int own,long ct,String accstr) {
+		FID=ID;
+		dir=d;
+		ownerId=own;
+		createTime=ct;
+		owner=null;
+		accessilbe=accstr;
+	}
 	
 	/**
 	 * Get the ID of this file
@@ -54,7 +80,7 @@ public class File {
 	 * @return the file name
 	 */
 	public String fileName() {
-		int pos=dir.lastIndexOf(java.io.File.separator);
+		int pos=dir.lastIndexOf('/');
 		if(pos>=0) return dir.substring(pos+1);
 		else return dir;
 	}
@@ -124,34 +150,143 @@ public class File {
 	}
 	
 	/**
+	 * Check if a provided user has permission to grant access to this file
+	 * @param UID The user's ID
+	 * @return Whether this user can access this file
+	 */
+	public boolean isAccessible(int UID) {
+		return accessilbe.contains("|"+UID+"|");
+	}
+	
+	/**
+	 * Grant a single user the permission to access this file
+	 * @param UID The id of that user
+	 */
+	public void addAccessible(int UID) {
+		synchronized(accessilbe){
+			if(!isAccessible(UID))
+				accessilbe=accessilbe+UID+"|";
+		}
+	}
+	
+	/**
+	 * Grant a set of users the permission to access this file
+	 * @param UIDs A collection containing IDs of that set of users
+	 */
+	public void addAccessible(Collection<Integer> UIDs) {
+		synchronized(accessilbe){
+			StringBuilder builder=new StringBuilder(accessilbe);
+			for(Integer i:UIDs) if(!isAccessible(i)) {	//Not in the accessable string yet
+				builder.append(i).append('|');
+			}
+			accessilbe=builder.toString();
+		}
+	}
+	
+	/**
 	 * Get the input stream for this file
 	 * @return the input stream
 	 * @throws FileNotFoundException If the file was accidentally deleted or GrafixPlane is broken
 	 */
 	public InputStream getInputStream() throws FileNotFoundException {
-		return new FileInputStream(new java.io.File(contFolder,ownerId+java.io.File.separatorChar+dir));
+		return new FileInputStream(new java.io.File(contFolder,ownerId+String.valueOf(FID)
+				.replaceAll(java.io.File.pathSeparator,"").replaceAll("/",java.io.File.pathSeparator)));
 	}
 	
 	/**
-	 * 
-	 * @param FID
-	 * @return The File object, or <tt>NULL</tt> if there is no file with this FID
-	 * @throws SQLException 
+	 * Get the output stream for this file<br/>
+	 * @return the output stream
+	 * @throws FileNotFoundException If the file was accidentally deleted or GrafixPlane is broken
+	 */
+	public OutputStream getOutputStream() throws FileNotFoundException {
+		return new FileOutputStream(new java.io.File(contFolder,ownerId+String.valueOf(FID)
+				.replaceAll(java.io.File.pathSeparator,"").replaceAll("/",java.io.File.pathSeparator)));
+	}
+	
+	/**
+	 * Get the File object for a file specified by its ID
+	 * @param FID The file's ID
+	 * @return The File object, or <tt>NULL</tt> if there is no file bundled to this FID
+	 * @throws SQLException If something went wrong when trying to access the database
 	 */
 	public static File getFile(int FID) throws SQLException {
-		File result=new File();
 		ResultSet rset;
 		synchronized(getFile) {
 			getFile.setInt(1,FID);
 			rset=getFile.executeQuery();
 		}
 		if(!rset.first()) return null;
-		result.FID=FID;
-		result.dir=rset.getString(2);
-		result.ownerId=rset.getInt(3);
-		result.createTime=rset.getLong(4);
-		result.owner=null;
-		return result;
+		return new File(FID,rset.getString(2),rset.getInt(3),rset.getLong(4),rset.getString(5));
+	}
+	
+	public static File newFile(int ownerID,String dir) throws SQLException {
+		int thisID;
+		long time=System.currentTimeMillis();
+		String accstr=String.format("|%d|",ownerID);
+		synchronized(currentID) {
+			thisID=++currentID;
+		}
+		synchronized(newFile){
+			newFile.setInt(1,thisID);
+			newFile.setString(2,formatDir(dir));
+			newFile.setInt(3,ownerID);
+			newFile.setLong(4,time);
+			newFile.setString(5,accstr);
+			
+			newFile.execute();
+		}
+		
+		return new File(thisID,dir,ownerID,time,accstr);
+	}
+	
+	/**
+	 * Check if a user have a file matches the specified directory
+	 * @param dir the directory
+	 * @param owner the user
+	 * @return Whether there is a file matches the specified directory
+	 * @throws SQLException If something went wrong when trying to access the database
+	 */
+	public static boolean hasFileIn(String dir,int owner) throws SQLException {
+		synchronized (checkFile) {
+			checkFile.setInt(1,owner);
+			try {
+				checkFile.setString(2,formatDir(dir));
+			} catch (IllegalArgumentException ex) {
+				return false;
+			}
+			return checkFile.executeQuery().first();
+		}
+	}
+	
+	/**
+	 * Format the directory string
+	 * @param ori the input string
+	 * @return The formatted directory string
+	 * @throws IllegalArgumentException 
+	 */
+	public static String formatDir(String ori) throws IllegalArgumentException {
+		//TODO: forbidden char set
+		String dirs[]=ori.trim().split("/");
+		for(int i=dirs.length-1;i>=0;--i) {
+			if(dirs[i].equals("")) dirs[i]=null;
+			else if(dirs[i].equals(".")) dirs[i]=null;
+			else if(dirs[i].equals("..")) {
+				int back=1;
+				dirs[i]=null;
+				while(back!=0) {
+					--i;
+					if(i<0) throw new IllegalArgumentException();
+					if(dirs[i].equals("..")) ++back;
+					else if(!((dirs[i].equals("")||dirs[i].equals(".")))) --back;
+					dirs[i]=null;
+				}
+			}
+		}
+		StringBuilder builder=new StringBuilder();
+		for(int i=0;i<dirs.length;i++) {
+			if(dirs[i]!=null) builder.append('/').append(dirs[i]);
+		}
+		return builder.toString();
 	}
 	
 	/**
@@ -163,17 +298,20 @@ public class File {
 		TFormat=new SimpleDateFormat(format);
 	}
 	
-	public static void init(Connection conn) throws SQLException {
+	public static void init(Connection conn,int cID) throws SQLException {
 		getFile=conn.prepareStatement("SELECT * FROM FILE WHERE FID = ?");
-		newFile=conn.prepareStatement("INSERT INTO FILE VALUES(?,?,?,?)");
+		newFile=conn.prepareStatement("INSERT INTO FILE VALUES(?,?,?,?,?)");
 		delFile=conn.prepareStatement("DELETE FROM FILE WHERE FID=?");
+		checkFile=conn.prepareStatement("SELECT * FROM FILE WHERE(Owner = ? AND Dir = ?)");
 		TFormat=DateFormat.getDateInstance();	//After setting default locale
 		contFolder="uploaded";	//TODO: preference
+		currentID=cID;
 	}
 	
 	public static void clear() throws SQLException {
 		getFile.close();
 		newFile.close();
 		delFile.close();
+		GrafixPlane.getGP().getConfig().setInt("FIDCount",currentID);
 	}
 }

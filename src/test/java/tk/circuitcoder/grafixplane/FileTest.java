@@ -12,7 +12,6 @@ import tk.circuitcoder.grafixplane.db.H2DatabaseManager;
 import tk.circuitcoder.grafixplane.file.File;
 
 public class FileTest {
-	private static java.io.File tar;
 	@BeforeClass
 	public static void setup() throws ClassNotFoundException, SQLException {
 		H2DatabaseManager manager=new H2DatabaseManager();
@@ -23,12 +22,12 @@ public class FileTest {
 				+ "FID int UNSIGNED,"
 				+ "Dir varchar,"
 				+ "Owner int,"
-				+ "CTime bigint UNSIGNED"
+				+ "CTime bigint UNSIGNED,"
+				+ "Accable varchar"
 				+ ");");
 		
-		tar=new java.io.File("13","target1.txt");
-		stat.execute("INSERT INTO FILE VALUES(1,'"+tar.getAbsolutePath()+"',13,123456)");
-		File.init(conn);
+		stat.execute("INSERT INTO FILE VALUES(1,'"+File.formatDir("/hello/target1.txt")+"',13,123456,'|13|17|')");
+		File.init(conn,2);
 	}
 	
 	@Test
@@ -36,9 +35,23 @@ public class FileTest {
 		File f=File.getFile(1);
 		assertNotNull(f);
 		assertEquals(1,f.FID());
-		assertEquals(tar.getAbsolutePath(), f.dir());
+		assertEquals("/hello/target1.txt", f.dir());
 		assertEquals(13,f.ownerID());
 		assertEquals(123456,f.createTime());
+		
+		System.out.println(f.fileName());
+		assertEquals("target1.txt",f.fileName());
+		assertEquals("target1",f.baseName());
+		assertEquals("txt",f.extendName());
+		
+		assertTrue(File.hasFileIn("/hello/target1.txt",13));
+		assertTrue(f.isAccessible(13));
+		assertTrue(f.isAccessible(17));
 		//TODO date/formatted time test
+	}
+	
+	@Test
+	public void dirFormatTest() {
+		assertEquals("/1/2/3",File.formatDir("//5/../2/6/../.././1/2//3/"));
 	}
 }

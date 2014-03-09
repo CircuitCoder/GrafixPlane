@@ -32,6 +32,12 @@ public class Config {
 		return Integer.parseInt(str);
 	}
 	
+	public Long getLong(String key) {
+		String str=get(key);
+		if(str==null) return null;
+		return Long.parseLong(str);
+	}
+	
 	public String set(String key,String value) {
 		synchronized (configs) {
 			return configs.put(key, value);
@@ -39,6 +45,10 @@ public class Config {
 	}
 	
 	public String setInt(String key,int value) {
+		return configs.put(key, String.valueOf(value));
+	}
+	
+	public String setLong(String key,long value) {
 		return configs.put(key, String.valueOf(value));
 	}
 	

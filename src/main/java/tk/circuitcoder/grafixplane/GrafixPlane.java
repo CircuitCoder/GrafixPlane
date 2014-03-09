@@ -606,7 +606,7 @@ public class GrafixPlane {
 					+ ")");
 			
 			config=new Config();
-			config.init(conn, Arrays.asList("mailCount:0","UIDCount:0","BIDCount:1","BoxCapacity:100")); //Initialize the table
+			config.init(conn, Arrays.asList("mailCount:0","UIDCount:0","FIDCount:0","BIDCount:1","BoxCapacity:100")); //Initialize the table
 		}
 		
 		tables=dbmd.getTables(null, null, "USER", new String[]{"TABLE"});
@@ -657,7 +657,8 @@ public class GrafixPlane {
 					+ "FID int UNSIGNED,"
 					+ "Dir varchar,"
 					+ "Owner int,"
-					+ "CTime bigint UNSIGNED"
+					+ "CTime bigint UNSIGNED,"
+					+ "Accable varchar"
 					+ ");");
 
 		}
@@ -673,7 +674,7 @@ public class GrafixPlane {
 			User.init(conn);
 			Mailbox.init(conn);
 			MailManager.init(conn);
-			tk.circuitcoder.grafixplane.file.File.init(conn);
+			tk.circuitcoder.grafixplane.file.File.init(conn,config.getInt("FIDCount"));
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
