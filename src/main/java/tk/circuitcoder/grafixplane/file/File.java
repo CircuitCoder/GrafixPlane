@@ -5,10 +5,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URI;
-import java.net.URL;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -17,6 +13,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 import tk.circuitcoder.grafixplane.GrafixPlane;
 import tk.circuitcoder.grafixplane.user.User;
@@ -45,6 +43,9 @@ public class File {
 	private static PreparedStatement newFile;
 	private static PreparedStatement delFile;
 	private static PreparedStatement checkFile;
+	private static PreparedStatement getAll;
+	private static PreparedStatement setAccessible;
+	private static PreparedStatement getAccessible;
 	private static DateFormat TFormat;
 	private static String contFolder;
 	
@@ -155,32 +156,54 @@ public class File {
 	 * @return Whether this user can access this file
 	 */
 	public boolean isAccessible(int UID) {
+		try {
+			updateAccessible();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			//DO nothing
+		}
 		return accessilbe.contains("|"+UID+"|");
 	}
 	
 	/**
 	 * Grant a single user the permission to access this file
 	 * @param UID The id of that user
+	 * @throws SQLException If something went wrong when trying to access the database
 	 */
-	public void addAccessible(int UID) {
-		synchronized(accessilbe){
-			if(!isAccessible(UID))
-				accessilbe=accessilbe+UID+"|";
-		}
+	public void addAccessible(int UID) throws SQLException {
+		updateAccessible();
+		if(!isAccessible(UID))
+			accessilbe=accessilbe+UID+"|";
+		saveAccessible();
 	}
 	
 	/**
 	 * Grant a set of users the permission to access this file
 	 * @param UIDs A collection containing IDs of that set of users
+	 * @throws SQLException If something went wrong when trying to access the database
 	 */
-	public void addAccessible(Collection<Integer> UIDs) {
-		synchronized(accessilbe){
-			StringBuilder builder=new StringBuilder(accessilbe);
-			for(Integer i:UIDs) if(!isAccessible(i)) {	//Not in the accessable string yet
-				builder.append(i).append('|');
-			}
-			accessilbe=builder.toString();
+	public void addAccessible(Collection<Integer> UIDs) throws SQLException {
+		updateAccessible();
+		StringBuilder builder=new StringBuilder(accessilbe);
+		for(Integer i:UIDs) if(!isAccessible(i)) {	//Not in the accessable string yet
+			builder.append(i).append('|');
+		accessilbe=builder.toString();
 		}
+		saveAccessible();
+	}
+	
+	//TODO: doc plz
+	public void removeAccessible(int UID) throws SQLException {
+		updateAccessible();
+		accessilbe=accessilbe.replaceAll("\\|"+UID+"\\|","|");
+		saveAccessible();
+	}
+	
+	//TODO: optimize
+	public void removeAccessible(Collection<Integer> UIDs) throws SQLException {
+		updateAccessible();
+		for(Integer i:UIDs) accessilbe=accessilbe.replaceAll("\\|"+i+"\\|","|");
+		saveAccessible();
 	}
 	
 	/**
@@ -201,6 +224,23 @@ public class File {
 	public OutputStream getOutputStream() throws FileNotFoundException {
 		return new FileOutputStream(new java.io.File(contFolder,ownerId+String.valueOf(FID)
 				.replaceAll(java.io.File.pathSeparator,"").replaceAll("/",java.io.File.pathSeparator)));
+	}
+	
+	private void updateAccessible() throws SQLException {
+		synchronized (getAccessible) {
+			getAccessible.setInt(1,FID);
+			ResultSet rset=getAccessible.executeQuery();
+			rset.first();
+			accessilbe=rset.getString(1);
+		}
+	}
+	
+	private void saveAccessible() throws SQLException {
+		synchronized (setAccessible) {
+			setAccessible.setString(1,accessilbe);
+			setAccessible.setInt(2,FID);
+			setAccessible.execute();
+		}
 	}
 	
 	/**
@@ -290,6 +330,31 @@ public class File {
 	}
 	
 	/**
+	 * Get all file uploaded by a specified user with a specified prefix in it directory
+	 * @param u The user's ID
+	 * @param prefix The directory prefix, or an empty string for root directory
+	 * @return The set of all that kind of files
+	 * @throws SQLException If something went wrong when trying to access the database
+	 */
+	public static Set<File> getAllFile(int u,String prefix) throws SQLException {
+		HashSet<File> result=new HashSet<File>();
+		ResultSet rset;
+		synchronized (getAll) {
+			getAll.setInt(1,u);
+			rset=getAll.executeQuery();
+		}
+		if(rset.first()) {
+			do {
+				String pathStr=rset.getString(2);
+				if(pathStr.startsWith(prefix))
+					result.add(new File(rset.getInt(1),rset.getString(2),rset.getInt(3),rset.getLong(4),rset.getString(5)));
+			} while(rset.next());
+		}
+		
+		return result;
+	}
+	
+	/**
 	 * Set the format style when formatting create time
 	 * @param format the format to feed into a SimpleDateFormat
 	 * @see java.text.SimpleDateFormat
@@ -303,6 +368,10 @@ public class File {
 		newFile=conn.prepareStatement("INSERT INTO FILE VALUES(?,?,?,?,?)");
 		delFile=conn.prepareStatement("DELETE FROM FILE WHERE FID=?");
 		checkFile=conn.prepareStatement("SELECT * FROM FILE WHERE(Owner = ? AND Dir = ?)");
+		getAll=conn.prepareStatement("SELECT * FROM FILE WHERE Owner = ?");
+		setAccessible=conn.prepareStatement("UPDATE FILE SET Accable = ? WHERE FID = ?");
+		getAccessible=conn.prepareStatement("SELECT Accable FROM FILE WHERE FID = ?");
+		
 		TFormat=DateFormat.getDateInstance();	//After setting default locale
 		contFolder="uploaded";	//TODO: preference
 		currentID=cID;
