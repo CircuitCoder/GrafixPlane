@@ -83,7 +83,7 @@ public class FileServlet extends HttpServlet{
 		for(FileItem i:files) {
 			if(!i.isFormField()) {
 				try {
-					File f=File.newFile(User.getCurrentUser(req.getSession()).getUID(),dir+"/"+i.getName());
+					File f=File.newFile(User.getCurrentUser(req.getSession()).getUID(),dir+i.getName());
 					if(f==null) {
 						JSONObject slot=new JSONObject();
 						slot.put("name",i.getName());
@@ -92,7 +92,7 @@ public class FileServlet extends HttpServlet{
 						result.add(slot);
 						continue;
 					}
-					GrafixPlane.getGP().getLogger().info("Uploading file: "+f.getFile().getAbsolutePath()+" with dir "+dir+"/"+i.getName());
+					GrafixPlane.getGP().getLogger().debug("Uploading file: "+f.getFile().getAbsolutePath()+" with dir "+dir+i.getName());
 					i.write(f.getFile());
 					JSONObject slot=new JSONObject();
 					slot.put("name",i.getName());
