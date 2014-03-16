@@ -9,11 +9,23 @@ public void jspInit() {
 	bundle=GrafixPlane.getGP().getTranslation();
 }
 %>
+<%
+	String redir="/home";
+	Cookie cookies[]=request.getCookies();
+	for(Cookie c:cookies) if(c.getName().equals("redirect")) {
+		redir=c.getValue();
+		c.setMaxAge(0);
+	}
+%>
 <html>
 	<head>
 		<link rel="stylesheet" type="text/css" href="/styles/default.css" />
 		<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 		<title>Login</title>
+		<script type="text/javascript">
+		<!-- constants -->
+		var dest="<%=redir%>";
+		</script>
 		<script type="text/javascript" src="/js/jquery.js"></script>
 		<script type="text/javascript" src="/js/login.js"></script>
 		<script type="text/javascript" src="/js/util.js"></script>

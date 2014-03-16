@@ -49,6 +49,15 @@
 		<url-pattern>/mail</url-pattern>
 	</servlet-mapping>
 	
+	<servlet>
+		<servlet-name>FileServlet</servlet-name>
+		<servlet-class>tk.circuitcoder.grafixplane.servlet.FileServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>FileServlet</servlet-name>
+		<url-pattern>/file</url-pattern>
+	</servlet-mapping>
+	
 	<listener>
 		<listener-class>tk.circuitcoder.grafixplane.user.User$SessionListener</listener-class>
 	</listener>

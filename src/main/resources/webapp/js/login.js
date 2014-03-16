@@ -22,10 +22,10 @@ function login() {
 	req.send("uname=" + document.getElementById("uname").value + "&passwd="
 			+ document.getElementById("passwd").value);
 	if (req.responseText == "0") {
-		window.location.href = "/home"; //Login succeed
+		window.location.href = dest; //Login succeed
 	} else if(req.responseText ==2) {
 		alert("already logined!");
-		window.location.href = "/home";
+		window.location.href = dest;
 	} else {
 		alert("Wrong User/Password combination!");
 	}

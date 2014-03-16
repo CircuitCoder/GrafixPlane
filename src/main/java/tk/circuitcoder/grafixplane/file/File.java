@@ -3,6 +3,7 @@ package tk.circuitcoder.grafixplane.file;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.Connection;
@@ -11,10 +12,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
+import java.util.TreeSet;
 
 import tk.circuitcoder.grafixplane.GrafixPlane;
 import tk.circuitcoder.grafixplane.user.User;
@@ -25,7 +28,45 @@ import tk.circuitcoder.grafixplane.user.User;
  * No modification option for file since they're fixed after being uploaded
  * @author CircuitCoder
  */
-public class File {
+public class File implements Comparable<Object> {
+	
+	public static class Folder implements Comparable<Object> {
+		private String dir;
+		private long size;
+		private long lastMod;
+		
+		private Folder(String d,long lm) {
+			dir=d;
+			size=0;
+			lastMod=lm;
+		}
+		
+		@Override
+		public boolean equals(Object ano) {
+			if(ano instanceof Folder&&((Folder) ano).dir.equals(dir)) return true;
+			else return false;
+		}
+		
+		public String getDir() {return dir;}
+		public long getSize() {return size;}
+		public long getLastMod() {return lastMod;}
+		
+		private void updateLastMod(long lm) {
+			if(lm>lastMod) lastMod=lm;
+		}
+		
+		private void incSize(long s) {
+			size+=s;
+		}
+		
+		@Override
+		public int compareTo(Object o) {
+			if(o instanceof File) return dir.compareTo(((File) o).dir);
+			else if(o instanceof Folder) return dir.compareTo(((Folder) o).dir);
+			else throw new IllegalArgumentException("Cannot compare a Folder to another object that is not a File nor a Folder");
+		}
+	}
+	
 	//TODO: need a pool?
 	private int FID;
 	private String dir;
@@ -206,24 +247,34 @@ public class File {
 		saveAccessible();
 	}
 	
+	public java.io.File getFile() throws IOException {
+		java.io.File f=new java.io.File(contFolder,String.valueOf(ownerId)+java.io.File.separatorChar+String.valueOf(FID)
+				.replaceAll(java.io.File.pathSeparator,"").replaceAll("/",java.io.File.pathSeparator));
+		java.io.File p=f.getParentFile();
+		if(!p.exists()) p.mkdirs();
+		return f;
+	}
+	
 	/**
 	 * Get the input stream for this file
 	 * @return the input stream
-	 * @throws FileNotFoundException If the file was accidentally deleted or GrafixPlane is broken
+	 * @throws IOException 
 	 */
-	public InputStream getInputStream() throws FileNotFoundException {
-		return new FileInputStream(new java.io.File(contFolder,ownerId+String.valueOf(FID)
-				.replaceAll(java.io.File.pathSeparator,"").replaceAll("/",java.io.File.pathSeparator)));
+	public InputStream getInputStream() throws IOException {
+		return new FileInputStream(getFile());
 	}
 	
 	/**
 	 * Get the output stream for this file<br/>
 	 * @return the output stream
-	 * @throws FileNotFoundException If the file was accidentally deleted or GrafixPlane is broken
+	 * @throws IOException If the file was accidentally deleted or GrafixPlane is broken
 	 */
-	public OutputStream getOutputStream() throws FileNotFoundException {
-		return new FileOutputStream(new java.io.File(contFolder,ownerId+String.valueOf(FID)
-				.replaceAll(java.io.File.pathSeparator,"").replaceAll("/",java.io.File.pathSeparator)));
+	public OutputStream getOutputStream() throws IOException {
+		java.io.File f=getFile();
+		java.io.File fp=f.getParentFile();
+		if(!fp.exists()) fp.mkdirs();
+		if(!f.exists()) f.createNewFile();
+		return new FileOutputStream(f);
 	}
 	
 	private void updateAccessible() throws SQLException {
@@ -243,6 +294,13 @@ public class File {
 		}
 	}
 	
+	@Override
+	public int compareTo(Object o) {
+		if(o instanceof File) return dir.compareTo(((File) o).dir);
+		else if(o instanceof Folder) return dir.compareTo(((Folder) o).dir);
+		else throw new IllegalArgumentException("Cannot compare a File to another object that is not a File nor a Folder");
+	}
+	
 	/**
 	 * Get the File object for a file specified by its ID
 	 * @param FID The file's ID
@@ -260,6 +318,7 @@ public class File {
 	}
 	
 	public static File newFile(int ownerID,String dir) throws SQLException {
+		if(hasFileIn(dir,ownerID)) return null;
 		int thisID;
 		long time=System.currentTimeMillis();
 		String accstr=String.format("|%d|",ownerID);
@@ -332,12 +391,21 @@ public class File {
 	/**
 	 * Get all file uploaded by a specified user with a specified prefix in it directory
 	 * @param u The user's ID
-	 * @param prefix The directory prefix, or an empty string for root directory
+	 * @param prefix The directory prefix
 	 * @return The set of all that kind of files
 	 * @throws SQLException If something went wrong when trying to access the database
 	 */
-	public static Set<File> getAllFile(int u,String prefix) throws SQLException {
-		HashSet<File> result=new HashSet<File>();
+	@SuppressWarnings("rawtypes")
+	public static ArrayList<Set> getAllFile(int u,String prefix) throws SQLException {
+		if(prefix.equals("/")) prefix="";
+		if(!prefix.endsWith("/")) prefix=prefix.concat("/");
+		
+		Set<File> files=new TreeSet<File>();
+		Set<Folder> folders=new TreeSet<Folder>();
+		ArrayList<Set> result=new ArrayList<Set>(2);
+		result.add(files);
+		result.add(folders);
+		
 		ResultSet rset;
 		synchronized (getAll) {
 			getAll.setInt(1,u);
@@ -347,7 +415,25 @@ public class File {
 			do {
 				String pathStr=rset.getString(2);
 				if(pathStr.startsWith(prefix))
-					result.add(new File(rset.getInt(1),rset.getString(2),rset.getInt(3),rset.getLong(4),rset.getString(5)));
+					if(pathStr.lastIndexOf('/')==prefix.length()-1)
+						files.add(new File(rset.getInt(1),rset.getString(2),rset.getInt(3),rset.getLong(4),rset.getString(5)));
+					else {
+						String reldir=pathStr.substring(prefix.length(),
+								pathStr.indexOf('/',prefix.length()));
+						Iterator<Folder> it=folders.iterator();
+						boolean needNew=true;
+						while(needNew&&it.hasNext()) {
+							Folder curr=it.next();
+							if(curr.dir.equals(reldir)) {
+								needNew=false;
+								curr.updateLastMod(rset.getLong(4));
+							}
+						}
+						if(needNew) {
+							Folder f=new Folder(reldir,rset.getLong(4));
+							folders.add(f);
+						}
+					}
 			} while(rset.next());
 		}
 		
@@ -374,6 +460,8 @@ public class File {
 		
 		TFormat=DateFormat.getDateInstance();	//After setting default locale
 		contFolder="uploaded";	//TODO: preference
+		java.io.File contFile=new java.io.File(contFolder);
+		if(!contFile.exists()) contFile.mkdirs();
 		currentID=cID;
 	}
 	

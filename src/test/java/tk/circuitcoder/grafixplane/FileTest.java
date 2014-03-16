@@ -3,6 +3,7 @@ package tk.circuitcoder.grafixplane;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
 
@@ -12,6 +13,7 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 import tk.circuitcoder.grafixplane.db.H2DatabaseManager;
 import tk.circuitcoder.grafixplane.file.File;
+import tk.circuitcoder.grafixplane.file.File.Folder;
 
 public class FileTest {
 	private static Statement stat;
@@ -92,14 +94,25 @@ public class FileTest {
 	
 	@Test
 	public void getAllTest() throws SQLException {
-		System.out.println("File in the /");
-		Set<File> s1=File.getAllFile(13,"");
-		assertEquals(3,s1.size());
-		for(File f:s1) System.out.println(f.dir());
+		System.out.println("---getAllTest---");
+		ArrayList<Set> s1=File.getAllFile(13,"/");
 		
-		System.out.println("File in the /hello");
-		Set<File> s2=File.getAllFile(13,"/hello");
-		assertEquals(2,s2.size());
-		for(File f:s2) System.out.println(f.dir());
+		System.out.println("Folders in /");
+		for(Object f:s1.get(1)) System.out.println(((Folder) f).getDir());
+		System.out.println("Files in /");
+		for(Object f:s1.get(0)) System.out.println(((File) f).fileName());
+		assertEquals(1,s1.get(0).size());
+		assertEquals(1,s1.get(1).size());
+		
+		ArrayList<Set> s2=File.getAllFile(13,"/hello");
+		
+		System.out.println("Folders in /hello");
+		for(Object f:s2.get(1)) System.out.println(((Folder) f).getDir());
+		System.out.println("Files in /hello");
+		for(Object f:s2.get(0)) System.out.println(((File) f).fileName());
+		assertEquals(2,s2.get(0).size());
+		assertEquals(0,s2.get(1).size());
+		
+		System.out.println("---getAllTest---\n\n");
 	}
 }

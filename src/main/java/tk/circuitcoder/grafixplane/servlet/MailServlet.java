@@ -6,6 +6,7 @@ import java.util.HashSet;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -31,6 +32,7 @@ public class MailServlet extends HttpServlet {
 	public void doGet(HttpServletRequest req,HttpServletResponse resp) throws IOException, ServletException {
 		if(!User.isLogined(req.getSession())) {
 			resp.sendRedirect("/login.jsp");
+			resp.addCookie(new Cookie("redirect",req.getRequestURI()));
 			return;
 		}
 		
