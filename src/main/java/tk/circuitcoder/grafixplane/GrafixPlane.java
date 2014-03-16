@@ -178,7 +178,7 @@ public class GrafixPlane {
 		}
 		@Override
 		public void destroy() {
-			instance.onExit();
+			if(!standalone) instance.onExit();
 		}
 	}
 	
